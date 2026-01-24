@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from app.controllers.plan_controller import router as plan_router
 from app.controllers.transcript_controller import router as transcript_router
@@ -14,6 +15,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def root():
+    return {
+        "message": "PathPilot API",
+        "version": "0.1.0",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "plan": "/plan/generate, /plan/repair",
+            "transcripts": "/transcripts/parse, /transcripts/{id}, /transcripts/",
+            "catalog": "/catalog/status, /catalog/search, /catalog/all"
+        }
+    }
+
+@app.get("/favicon.ico")
+def favicon():
+    """Handle favicon requests to prevent 404 errors."""
+    return Response(status_code=204)
 
 @app.get("/health")
 def health():

@@ -16,3 +16,12 @@ class TranscriptParseResponse(BaseModel):
     extracted_text_chars: int
     courses: List[ExtractedCourse]
     warnings: List[str] = Field(default_factory=list)
+    university_name: Optional[str] = Field(default=None, description="University name extracted from transcript")
+    program_name: Optional[str] = Field(default=None, description="Program/Major name extracted from transcript")
+    total_credits_attempted: float = Field(default=0.0, description="Total attempted credits found in transcript")
+    total_credits_earned: float = Field(default=0.0, description="Total earned credits (passing grades only)")
+    study_year: Optional[int] = Field(default=None, description="Calculated study year based on Fall/Winter terms")
+    # Legacy fields for backward compatibility
+    total_credits: float = Field(default=0.0, description="Alias for total_credits_attempted")
+    completed_credits: float = Field(default=0.0, description="Alias for total_credits_earned")
+    degree_credits: float = Field(default=0.0, description="Degree credits - excludes co-op courses (SCCO)")
