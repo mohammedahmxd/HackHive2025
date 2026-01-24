@@ -1,6 +1,6 @@
-# PathPilot — Plan your degree for your career
+# PathPilot: Aligning academic progress with career outcomes.
 
-PathPilot helps students choose electives that align with a career goal and builds a semester-by-semester plan that respects prerequisites and program rules. It also supports networking by generating LinkedIn search queries and drafting outreach messages.
+PathPilot provides students with career insights aligned to their completed prerequisites and program requirements. It also supports career growth by generating targeted LinkedIn search queries, drafting outreach messages, and recommending projects to strengthen key skills for each role.
 
 ## Project Structure
 ```
