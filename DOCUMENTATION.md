@@ -12,6 +12,7 @@ PathPilot helps students choose electives that align with a career goal and buil
 
 ## Project Structure
 
+```text
 HackHive2025/
   backend/                     # FastAPI backend
     app/                       # API modules
@@ -23,7 +24,7 @@ HackHive2025/
   frontend/                    # React frontend
   data/                        # (Optional) course catalog + career profiles (JSON)
   README.md
-  DOCUMENTATION.md
+  DOCUMENTATION.md ```
 
 ---
 
