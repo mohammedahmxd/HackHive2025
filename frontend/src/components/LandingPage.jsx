@@ -1,17 +1,40 @@
 import { motion } from 'framer-motion'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 export default function LandingPage({ onUpload }) {
   const fileInputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
 
   const handleButtonClick = () => {
     fileInputRef.current?.click()
   }
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
-      onUpload(file)
+      setUploading(true)
+
+      // Send file to backend MVC endpoint
+      const formData = new FormData()
+      formData.append('file', file)
+
+      try {
+        const response = await fetch('http://localhost:8000/transcripts/parse', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const data = await response.json()
+
+        console.log('Transcript parsed:', data)
+        // Move to validation page
+        onUpload(file)
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        alert('Error connecting to server. Make sure the backend is running.')
+      } finally {
+        setUploading(false)
+      }
     }
   }
 
@@ -63,6 +86,7 @@ export default function LandingPage({ onUpload }) {
 
       <button
         onClick={handleButtonClick}
+        disabled={uploading}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -73,19 +97,23 @@ export default function LandingPage({ onUpload }) {
           fontWeight: 500,
           border: 'none',
           borderRadius: '8px',
-          background: '#6366f1',
+          background: uploading ? '#9ca3af' : '#6366f1',
           color: '#ffffff',
-          cursor: 'pointer',
+          cursor: uploading ? 'not-allowed' : 'pointer',
           transition: 'all 0.2s ease',
           fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#4f46e5';
-          e.currentTarget.style.transform = 'scale(1.02)';
+          if (!uploading) {
+            e.currentTarget.style.background = '#4f46e5';
+            e.currentTarget.style.transform = 'scale(1.02)';
+          }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#6366f1';
-          e.currentTarget.style.transform = 'scale(1)';
+          if (!uploading) {
+            e.currentTarget.style.background = '#6366f1';
+            e.currentTarget.style.transform = 'scale(1)';
+          }
         }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -93,7 +121,7 @@ export default function LandingPage({ onUpload }) {
           <polyline points="17 8 12 3 7 8"></polyline>
           <line x1="12" y1="3" x2="12" y2="15"></line>
         </svg>
-        Upload Transcript
+        {uploading ? 'Uploading...' : 'Upload Transcript'}
       </button>
     </motion.div>
   )

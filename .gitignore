@@ -8,6 +8,8 @@ backend/.venv/
 *.pyd
 backend/.pytest_cache/
 backend/.mypy_cache/
+backend/uploads/*
+!backend/uploads/.gitignore
 
 # =========================
 # Node / React
