@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -5,25 +7,17 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #0a0a0a;
   color: #ffffff;
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
 }
 
 .app {
-  text-align: center;
-}
-
-h1 {
-  font-size: 4rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  width: 100%;
+  min-height: 100vh;
 }
