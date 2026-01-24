@@ -24,7 +24,7 @@ HackHive2025/
   frontend/                    # React frontend
   data/                        # (Optional) course catalog + career profiles (JSON)
   README.md
-  DOCUMENTATION.md
+  DOCUMENTATION.md```
 
 ---
 
