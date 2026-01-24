@@ -1,5 +1,4 @@
-from .schemas import PlanRequest, PlanResponse, Semester, RepairRequest, RepairResponse
-
+from app.models.plan_schemas import PlanRequest, PlanResponse, Semester, RepairRequest, RepairResponse
 
 def generate_plan(req: PlanRequest) -> PlanResponse:
     remaining = ["CPS109", "CPS209", "CPS305", "CPS506", "CPS510", "CPS633"]
@@ -16,7 +15,6 @@ def generate_plan(req: PlanRequest) -> PlanResponse:
     ]
 
     return PlanResponse(semesters=[sem1, sem2], notes=notes)
-
 
 def repair_plan(req: RepairRequest) -> RepairResponse:
     updated = req.current_plan
