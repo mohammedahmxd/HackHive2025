@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion'
 import { useRef, useState } from 'react'
+import logo from '../images/PathPilot.png'
+import { useAppContext } from '../context/AppContext'
 
 export default function LandingPage({ onUpload }) {
   const fileInputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
+  const { setTranscriptFile } = useAppContext()
 
   const handleButtonClick = () => {
     fileInputRef.current?.click()
@@ -27,6 +30,8 @@ export default function LandingPage({ onUpload }) {
         const data = await response.json()
 
         console.log('Transcript parsed:', data)
+        // Save to global state
+        setTranscriptFile(file)
         // Move to validation page
         onUpload(file)
       } catch (error) {
@@ -45,6 +50,7 @@ export default function LandingPage({ onUpload }) {
       exit={{ opacity: 0, y: -40 }}
       transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -54,27 +60,57 @@ export default function LandingPage({ onUpload }) {
         textAlign: 'center'
       }}
     >
-      <h1 style={{
-        fontSize: '4rem',
-        fontWeight: 700,
-        letterSpacing: '-0.02em',
-        marginBottom: '1rem',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-      }}>
-        PathPilot
-      </h1>
+      <motion.img
+        src={logo}
+        alt="PathPilot Logo"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '120px',
+          height: '120px',
+          marginBottom: '1.5rem'
+        }}
+      />
 
-      <p style={{
-        fontSize: '1.25rem',
-        fontWeight: 400,
-        marginBottom: '3rem',
-        maxWidth: '600px',
-        lineHeight: '1.6',
-        opacity: 0.9,
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-      }}>
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          fontSize: '4rem',
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          marginBottom: '1rem',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          color: 'var(--gold-bright)'
+        }}
+      >
+        PathPilot
+      </motion.h1>
+
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          fontSize: '1.25rem',
+          fontWeight: 400,
+          marginBottom: '3rem',
+          maxWidth: '600px',
+          lineHeight: '1.6',
+          opacity: 0.9,
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+        }}
+      >
         Navigate your academic journey and discover your career path
-      </p>
+      </motion.p>
 
       <input
         ref={fileInputRef}
@@ -84,36 +120,33 @@ export default function LandingPage({ onUpload }) {
         style={{ display: 'none' }}
       />
 
-      <button
+      <motion.button
         onClick={handleButtonClick}
         disabled={uploading}
+        whileHover={!uploading ? { scale: 1.05, y: -2 } : {}}
+        whileTap={!uploading ? { scale: 0.98 } : {}}
         style={{
+          position: 'relative',
+          zIndex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '0.75rem',
-          padding: '0.875rem 1.75rem',
-          fontSize: '1rem',
-          fontWeight: 500,
+          padding: '1rem 2rem',
+          fontSize: '1.05rem',
+          fontWeight: 600,
           border: 'none',
-          borderRadius: '8px',
-          background: uploading ? '#9ca3af' : '#6366f1',
-          color: '#ffffff',
+          borderRadius: '12px',
+          background: uploading
+            ? 'var(--gray-medium)'
+            : 'linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)',
+          color: uploading ? '#ffffff' : 'var(--blue-dark)',
           cursor: uploading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s ease',
-          fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-        }}
-        onMouseEnter={(e) => {
-          if (!uploading) {
-            e.currentTarget.style.background = '#4f46e5';
-            e.currentTarget.style.transform = 'scale(1.02)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!uploading) {
-            e.currentTarget.style.background = '#6366f1';
-            e.currentTarget.style.transform = 'scale(1)';
-          }
+          transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          boxShadow: uploading
+            ? 'none'
+            : '0 4px 20px rgba(255, 214, 10, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
         }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,7 +155,7 @@ export default function LandingPage({ onUpload }) {
           <line x1="12" y1="3" x2="12" y2="15"></line>
         </svg>
         {uploading ? 'Uploading...' : 'Upload Transcript'}
-      </button>
+      </motion.button>
     </motion.div>
   )
 }

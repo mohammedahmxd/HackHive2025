@@ -1,41 +1,42 @@
 import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
+import { AppProvider } from './context/AppContext'
 import ValidationPage from './components/ValidationPage'
 import LandingPage from './components/LandingPage'
+import DashboardPage from './components/DashboardPage'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('landing')
-  const [transcriptData, setTranscriptData] = useState(null)
 
   const handleUploadClick = (file) => {
-    // TODO: When backend is ready, send file to /api/parse-transcript
     console.log('File selected:', file)
-    setTranscriptData({ file })
     setCurrentPage('validation')
   }
 
   const handleBack = () => {
     setCurrentPage('landing')
-    setTranscriptData(null)
   }
 
-  const handleContinue = (validationData) => {
-    // TODO: When backend is ready, send validationData to /api/generate-schedule
-    console.log('Validation data:', validationData)
+  const handleContinue = () => {
     setCurrentPage('dashboard')
   }
 
   return (
-    <div className="app">
-      <AnimatePresence mode="wait">
-        {currentPage === 'landing' && (
-          <LandingPage key="landing" onUpload={handleUploadClick} />
-        )}
-        {currentPage === 'validation' && (
-          <ValidationPage key="validation" onBack={handleBack} onContinue={handleContinue} />
-        )}
-      </AnimatePresence>
-    </div>
+    <AppProvider>
+      <div className="app">
+        <AnimatePresence mode="wait">
+          {currentPage === 'landing' && (
+            <LandingPage key="landing" onUpload={handleUploadClick} />
+          )}
+          {currentPage === 'validation' && (
+            <ValidationPage key="validation" onBack={handleBack} onContinue={handleContinue} />
+          )}
+          {currentPage === 'dashboard' && (
+            <DashboardPage key="dashboard" onBack={() => setCurrentPage('validation')} />
+          )}
+        </AnimatePresence>
+      </div>
+    </AppProvider>
   )
 }
 
