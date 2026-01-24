@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useAppContext } from '../context/AppContext'
 import { mockUniversities } from '../data/mockData'
+import CourseGraph from './CourseGraph'
 
 export default function DashboardPage({ onBack }) {
   const { university, program, academicYear } = useAppContext()
@@ -46,7 +47,7 @@ export default function DashboardPage({ onBack }) {
       </motion.button>
 
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '1600px',
         margin: '0 auto',
         width: '100%',
         flex: 1
@@ -104,7 +105,24 @@ export default function DashboardPage({ onBack }) {
           </div>
         </motion.div>
 
-        {/* Content will be added here */}
+        {/* Course Requirement Graph */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <div style={{
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            color: '#ffffff',
+            marginBottom: '1rem',
+            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+            textAlign: 'center'
+          }}>
+            Course Requirements & Progress
+          </div>
+          <CourseGraph />
+        </motion.div>
       </div>
     </motion.div>
   )
