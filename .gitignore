@@ -26,8 +26,10 @@ frontend/.env.production
 # =========================
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/
+.claude/
 
 # =========================
 # Logs
@@ -47,6 +49,7 @@ backend/uploads/
 backend/transcript_results/
 backend/*.pdf
 backend/*_result.json
+backend/transcript_parse_result.json
 backend/tests/*_result.json
 
 # =========================

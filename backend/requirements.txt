@@ -5,3 +5,6 @@ beautifulsoup4
 pydantic
 PyPDF2
 pdfplumber
+rapidfuzz
+google-genai
+python-dotenv

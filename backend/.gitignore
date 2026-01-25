@@ -16,6 +16,7 @@ uploads/
 transcript_results/
 *.pdf
 *_result.json
+transcript_parse_result.json
 
 # IDE
 .vscode/

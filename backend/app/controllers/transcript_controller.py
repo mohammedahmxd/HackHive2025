@@ -1,4 +1,8 @@
 import os
+import uuid
+import json
+import re
+from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.transcript_service import parse_transcript_pdf
 from app.models.transcript_schemas import TranscriptParseResponse
@@ -91,8 +95,9 @@ async def parse_transcript(file: UploadFile = File(...)) -> Dict[str, Any]:
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a PDF transcript file")
 
-    # Always save as 'transcript.pdf' - automatically overwrites old uploads
-    save_path = os.path.join(UPLOAD_DIR, "transcript.pdf")
+    # Generate unique transcript ID
+    transcript_id = str(uuid.uuid4())
+    save_path = os.path.join(UPLOAD_DIR, f"{transcript_id}.pdf")
 
     contents = await file.read()
     with open(save_path, "wb") as f:

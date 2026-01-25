@@ -114,6 +114,9 @@ Test scripts are available in the `tests/` directory:
 - `pdfplumber` / `PyPDF2` - PDF parsing
 - `requests` - HTTP client
 - `beautifulsoup4` - Web scraping
+- `rapidfuzz` - Fuzzy string matching for course titles
+- `google-genai` - Gemini AI SDK for career recommendations
+- `python-dotenv` - Environment variable management
 
 ## 🔒 Environment & Security
 
@@ -125,6 +128,7 @@ Test scripts are available in the `tests/` directory:
 
 - [SERVICE_ARCHITECTURE.md](./SERVICE_ARCHITECTURE.md) - Service architecture details
 - [scripts/README.md](./scripts/README.md) - Course catalog scraper guide
+- [CAREER_RECOMMENDATION.md](./CAREER_RECOMMENDATION.md) - Career recommendation system guide
 
 ## 🐛 Troubleshooting
 

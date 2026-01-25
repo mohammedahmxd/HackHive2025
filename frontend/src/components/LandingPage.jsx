@@ -22,13 +22,19 @@ export default function LandingPage({ onUpload }) {
       formData.append("file", file);
 
       try {
+        // Use Vite proxy to avoid CORS issues
         const response = await fetch(
-          "http://localhost:8000/transcripts/parse",
+          "/api/transcripts/parse",
           {
             method: "POST",
             body: formData,
           },
         );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+          throw new Error(errorData.detail || `Server error: ${response.status} ${response.statusText}`);
+        }
 
         const data = await response.json();
 
@@ -39,7 +45,8 @@ export default function LandingPage({ onUpload }) {
         onUpload(file);
       } catch (error) {
         console.error("Error uploading file:", error);
-        alert("Error connecting to server. Make sure the backend is running.");
+        const errorMessage = error.message || "Error connecting to server. Make sure the backend is running on http://localhost:8000";
+        alert(errorMessage);
       } finally {
         setUploading(false);
       }
