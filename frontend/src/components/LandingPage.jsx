@@ -17,7 +17,17 @@ export default function LandingPage({ onUpload }) {
     if (file) {
       setUploading(true);
 
-      // Send file to backend MVC endpoint
+      // Simulate upload delay for demo
+      setTimeout(() => {
+        // Save to global state
+        setTranscriptFile(file);
+        // Move to validation page
+        onUpload(file);
+        setUploading(false);
+      }, 500);
+
+      // Backend transcript parsing disabled for now
+      /*
       const formData = new FormData();
       formData.append("file", file);
 
@@ -33,9 +43,7 @@ export default function LandingPage({ onUpload }) {
         const data = await response.json();
 
         console.log("Transcript parsed:", data);
-        // Save to global state
         setTranscriptFile(file);
-        // Move to validation page
         onUpload(file);
       } catch (error) {
         console.error("Error uploading file:", error);
@@ -43,6 +51,7 @@ export default function LandingPage({ onUpload }) {
       } finally {
         setUploading(false);
       }
+      */
     }
   };
 
