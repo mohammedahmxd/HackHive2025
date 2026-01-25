@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import re
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.transcript_service import parse_transcript_pdf
@@ -44,10 +45,40 @@ def _save_result(transcript_id: str, result: TranscriptParseResponse):
         json.dump(result_dict, f, indent=2, ensure_ascii=False)
     return result_dict
 
+def _validate_transcript_id(transcript_id: str) -> bool:
+    """Validate that transcript_id is a valid UUID format to prevent path traversal."""
+    # UUID format: 8-4-4-4-12 hex digits
+    uuid_pattern = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+    return bool(uuid_pattern.match(transcript_id))
+
 def _load_result(transcript_id: str) -> Dict[str, Any]:
     """Load parse result from JSON file."""
-    result_file = os.path.join(RESULTS_DIR, f"{transcript_id}.json")
-    if not os.path.exists(result_file):
+    # Validate UUID format to prevent path traversal attacks
+    if not _validate_transcript_id(transcript_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid transcript ID format. Expected UUID format."
+        )
+    
+    # Use Path for safer path handling (prevents directory traversal)
+    result_file = Path(RESULTS_DIR) / f"{transcript_id}.json"
+    
+    # Additional safety: ensure the resolved path is within RESULTS_DIR
+    try:
+        result_file = result_file.resolve()
+        results_dir_resolved = Path(RESULTS_DIR).resolve()
+        if not str(result_file).startswith(str(results_dir_resolved)):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid transcript ID - path traversal detected"
+            )
+    except (OSError, ValueError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid transcript ID: {str(e)}"
+        )
+    
+    if not result_file.exists():
         raise HTTPException(status_code=404, detail=f"Transcript result not found for ID: {transcript_id}")
     
     with open(result_file, 'r', encoding='utf-8') as f:

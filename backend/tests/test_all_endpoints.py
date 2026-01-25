@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Configuration
 API_BASE_URL = "http://localhost:8000"
-TRANSCRIPT_PATH = "../uploads/OTUTranscripts.pdf"
+TRANSCRIPT_PATH = "uploads/OTUTranscripts.pdf"
 
 def print_section(title):
     """Print a formatted section header."""

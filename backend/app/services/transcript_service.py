@@ -5,8 +5,10 @@ from app.models.transcript_schemas import TranscriptParseResponse, ExtractedCour
 from typing import List, Optional, Tuple
 import re
 
-PASSING_NONLETTER = {"PAS", "CO", "CR", "P"}  # treat as earned credits
-NON_EARNED = {"F", "WD", "W", "NC", "IP"}     # not earned
+# Passing non-letter grades that count as earned credits
+PASSING_NONLETTER = {"PAS", "CR", "P"}  # PAS=Pass, CR=Credit, P=Pass
+# Grades that do NOT count as earned credits
+NON_EARNED = {"F", "WD", "W", "NC", "IP", "CO"}  # CO=Currently in progress (not completed)
 
 def _infer_university_name(text: str, original_filename: str) -> Tuple[Optional[str], List[str]]:
     warnings = []
@@ -93,8 +95,11 @@ def _calc_credit_totals(courses: List[ExtractedCourse]) -> Tuple[float, float]:
         g = c.grade.upper().strip()
         if g in NON_EARNED:
             continue
-        # Letter grades or PAS/CO/CR/P count as earned
-        earned += float(c.credits)
+        # Letter grades (A-F with optional +/-) or passing non-letter grades (PAS, CR, P) count as earned
+        # Note: CO (Currently in progress) is excluded via NON_EARNED
+        is_letter_grade = len(g) >= 1 and g[0] in "ABCDEF" and (len(g) == 1 or g[1:] in ["+", "-", ""])
+        if g in PASSING_NONLETTER or is_letter_grade:
+            earned += float(c.credits)
 
     return attempted, earned
 
@@ -189,12 +194,23 @@ def get_completed_courses_from_transcript(transcript_response: TranscriptParseRe
         List of completed course codes (e.g., ["CPS109", "CPS209"])
     """
     completed = []
+    # Grades that indicate the course is NOT completed
+    incomplete_grades = {'F', 'WD', 'W', 'NC', 'IP', 'CO'}  # IP=In-Progress, CO=Currently in progress
+    
     for course in transcript_response.courses:
-        # Only include courses with valid codes and passing grades
-        if course.course_code:
-            # Filter out failing grades, withdrawals, etc.
-            if course.grade and course.grade.upper() not in ['F', 'WD', 'W', 'NC']:
-                completed.append(course.course_code.upper())
-            elif not course.grade:  # If no grade, assume completed if code exists
-                completed.append(course.course_code.upper())
+        # Only include courses with valid codes
+        if not course.course_code:
+            continue
+        
+        # Must have a grade to be considered completed
+        if not course.grade:
+            # No grade means course is likely in-progress or not yet completed
+            continue
+        
+        # Check if grade indicates completion
+        grade_upper = course.grade.upper().strip()
+        if grade_upper not in incomplete_grades:
+            # Course has a passing/completed grade
+            completed.append(course.course_code.upper())
+    
     return list(set(completed))  # Remove duplicates
