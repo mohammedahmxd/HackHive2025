@@ -79,10 +79,13 @@ def search_professors(query: str = ""):
             '--header', 'Authorization: Basic dGVzdDp0ZXN0',
             '--header', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             '--data', json.dumps(request_body),
-            '--silent'
+            '--silent',
+            '--insecure'  # Add insecure flag to bypass SSL verification
         ]
 
         print(f"Executing curl command for RateMyProfessor...")
+        print(f"URL: {url}")
+        print(f"Request body length: {len(json.dumps(request_body))}")
 
         result = subprocess.run(
             curl_command,
@@ -94,21 +97,41 @@ def search_professors(query: str = ""):
         if result.returncode != 0:
             print(f"curl failed with code {result.returncode}")
             print(f"stderr: {result.stderr}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"curl command failed: {result.stderr}"
-            )
+            print(f"stdout: {result.stdout}")
 
-        # Parse JSON response
-        try:
-            data = json.loads(result.stdout)
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse JSON response")
-            print(f"Response: {result.stdout[:500]}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Invalid JSON response from API"
-            )
+            # Fallback to Python requests if curl fails
+            print("Attempting fallback to Python requests...")
+            try:
+                import requests
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic dGVzdDp0ZXN0",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                }
+                response = requests.post(url, json=request_body, headers=headers, timeout=15, verify=False)
+                if response.status_code == 200:
+                    data = response.json()
+                    print(f"Requests fallback succeeded!")
+                else:
+                    raise HTTPException(status_code=response.status_code, detail="RateMyProfessor API error")
+            except Exception as req_error:
+                print(f"Requests fallback also failed: {req_error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Both curl and requests failed. curl code: {result.returncode}, requests: {str(req_error)}"
+                )
+
+        else:
+            # Parse JSON response from curl
+            try:
+                data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse JSON response")
+                print(f"Response: {result.stdout[:500]}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Invalid JSON response from API"
+                )
 
         # Extract professors from response
         professors = []

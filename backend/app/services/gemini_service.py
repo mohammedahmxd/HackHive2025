@@ -96,3 +96,64 @@ Input:
         return json.loads(text)
     except json.JSONDecodeError as e:
         raise RuntimeError(f"Failed to parse Gemini response as JSON: {e}\nResponse text: {text[:500]}")
+
+
+def recommend_3_projects(career_title: str, career_description: str) -> Dict[str, Any]:
+    """
+    Generate 3 project recommendations based on the selected career path.
+    Returns project details including name, description, difficulty, tech stack, and image URL.
+    """
+    prompt = f"""
+Return ONLY valid JSON. No markdown, no backticks.
+
+You are a project advisor. Based on the career path "{career_title}", recommend exactly 3 hands-on projects.
+
+Career Description: {career_description}
+
+For each project include:
+- name: short, catchy project name
+- description: 2-3 sentences explaining what the project does and why it's valuable for this career
+- difficulty: "Beginner", "Intermediate", or "Advanced"
+- tech_stack: array of 3-6 technologies/frameworks (e.g., ["Python", "Flask", "PostgreSQL"])
+- estimated_hours: approximate hours to complete (number)
+- learning_outcomes: array of 3-4 key skills learned
+
+Output schema:
+{{
+  "projects": [
+    {{
+      "name": "...",
+      "description": "...",
+      "difficulty": "...",
+      "tech_stack": ["...","..."],
+      "estimated_hours": 0,
+      "learning_outcomes": ["...","..."]
+    }}
+  ]
+}}
+
+Make projects diverse in difficulty and complementary to the career path.
+"""
+
+    client = _client()
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+    resp = client.models.generate_content(
+        model=model,
+        contents=prompt,
+    )
+
+    text = (resp.text or "").strip()
+
+    # Clean up JSON if wrapped in markdown code blocks
+    if text.startswith("```"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+    if text.startswith("```json"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Failed to parse Gemini response as JSON: {e}\nResponse text: {text[:500]}")

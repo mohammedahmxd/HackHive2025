@@ -16,6 +16,7 @@ from app.controllers.enrich_controller import router as enrich_router
 from app.controllers.recommend_controller import router as recommend_router
 from app.controllers.linkedin_controller import router as linkedin_router
 from app.controllers.professor_controller import router as professor_router
+from app.controllers.project_controller import router as project_router
 
 app = FastAPI(title="PathPilot API", version="0.1.0")
 
@@ -62,3 +63,4 @@ app.include_router(enrich_router, prefix="/enrich", tags=["enrich"])
 app.include_router(recommend_router, prefix="/recommend", tags=["recommend"])
 app.include_router(linkedin_router, prefix="/linkedin", tags=["linkedin"])
 app.include_router(professor_router, prefix="/professors", tags=["professors"])
+app.include_router(project_router, prefix="/projects", tags=["projects"])

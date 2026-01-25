@@ -39,6 +39,8 @@ def search_linkedin_jobs(request: JobSearchRequest):
         url = f"{LINKEDIN_API_URL}?title_filter={title_filter}&location_filter={location_filter}&limit=100&offset=0&description_type=text"
 
         # Use curl via subprocess (since Postman/curl works on your machine)
+        print(f"Using RAPIDAPI_KEY: {RAPIDAPI_KEY[:10]}...{RAPIDAPI_KEY[-10:]}")
+
         curl_command = [
             'curl',
             '--request', 'GET',
@@ -75,6 +77,16 @@ def search_linkedin_jobs(request: JobSearchRequest):
                 status_code=500,
                 detail=f"Invalid JSON response from API"
             )
+
+        # Check for API quota errors
+        if isinstance(jobs_data, dict) and "message" in jobs_data:
+            error_msg = jobs_data.get("message", "")
+            if "exceeded" in error_msg.lower() and "quota" in error_msg.lower():
+                print(f"API Quota Error: {error_msg}")
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"LinkedIn API quota exceeded. The free tier monthly limit has been reached. Please upgrade your RapidAPI plan or wait until next month."
+                )
 
         # Handle different response formats
         if isinstance(jobs_data, dict):
@@ -165,6 +177,9 @@ def search_linkedin_jobs(request: JobSearchRequest):
     except subprocess.TimeoutExpired:
         print(f"Request timeout error")
         raise HTTPException(status_code=408, detail="Request timed out")
+    except HTTPException:
+        # Re-raise HTTPExceptions (like quota errors) without wrapping
+        raise
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
         import traceback

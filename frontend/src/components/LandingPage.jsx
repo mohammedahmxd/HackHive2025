@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext'
 export default function LandingPage({ onUpload }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const { setTranscriptFile } = useAppContext();
+  const { setTranscriptFile, setTranscriptData, setUniversity, setProgram, setCourses } = useAppContext();
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -17,24 +17,12 @@ export default function LandingPage({ onUpload }) {
     if (file) {
       setUploading(true);
 
-      // Simulate upload delay for demo
-      setTimeout(() => {
-        // Save to global state
-        setTranscriptFile(file);
-        // Move to validation page
-        onUpload(file);
-        setUploading(false);
-      }, 500);
-
-      // Backend transcript parsing disabled for now
-      /*
       const formData = new FormData();
       formData.append("file", file);
 
       try {
-        // Use Vite proxy to avoid CORS issues
         const response = await fetch(
-          "/api/transcripts/parse",
+          "http://localhost:8000/transcripts/parse",
           {
             method: "POST",
             body: formData,
@@ -49,8 +37,18 @@ export default function LandingPage({ onUpload }) {
         const data = await response.json();
 
         console.log("Transcript parsed:", data);
+
+        // Save file and parsed data to global state
         setTranscriptFile(file);
-        onUpload(file);
+        setTranscriptData(data);
+
+        // Pre-fill context with parsed data
+        if (data.university_name) setUniversity(data.university_name);
+        if (data.program_name) setProgram(data.program_name);
+        if (data.courses) setCourses(data.courses);
+
+        // Move to validation page with parsed data
+        onUpload(data);
       } catch (error) {
         console.error("Error uploading file:", error);
         const errorMessage = error.message || "Error connecting to server. Make sure the backend is running on http://localhost:8000";
@@ -58,7 +56,6 @@ export default function LandingPage({ onUpload }) {
       } finally {
         setUploading(false);
       }
-      */
     }
   };
 
@@ -77,8 +74,57 @@ export default function LandingPage({ onUpload }) {
           minHeight: "100vh",
           padding: "2rem",
           textAlign: "center",
+          overflow: "hidden",
         }}
       >
+      {/* Animated gradient orbs */}
+      <motion.div
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        style={{
+          position: 'absolute',
+          top: '10%',
+          left: '10%',
+          width: '400px',
+          height: '400px',
+          background: 'radial-gradient(circle, rgba(255, 214, 10, 0.15) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <motion.div
+        animate={{
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 2
+        }}
+        style={{
+          position: 'absolute',
+          bottom: '10%',
+          right: '10%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(0, 53, 102, 0.2) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(60px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
       <motion.img
         src={logo}
         alt="PathPilot Logo"
@@ -92,8 +138,8 @@ export default function LandingPage({ onUpload }) {
         style={{
           position: "relative",
           zIndex: 1,
-          width: "120px",
-          height: "120px",
+          width: "180px",
+          height: "auto",
           marginBottom: "1.5rem",
         }}
       />
@@ -149,8 +195,22 @@ export default function LandingPage({ onUpload }) {
       <motion.button
         onClick={handleButtonClick}
         disabled={uploading}
-        whileHover={!uploading ? { scale: 1.05, y: -2 } : {}}
+        whileHover={!uploading ? { scale: 1.05, y: -2, boxShadow: "0 12px 40px rgba(255, 214, 10, 0.5)" } : {}}
         whileTap={!uploading ? { scale: 0.98 } : {}}
+        animate={!uploading ? {
+          boxShadow: [
+            "0 8px 32px rgba(255, 214, 10, 0.4)",
+            "0 8px 32px rgba(255, 214, 10, 0.6)",
+            "0 8px 32px rgba(255, 214, 10, 0.4)",
+          ]
+        } : {}}
+        transition={{
+          boxShadow: {
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }
+        }}
         style={{
           position: "relative",
           zIndex: 1,
