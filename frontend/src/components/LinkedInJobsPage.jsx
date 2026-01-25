@@ -25,19 +25,25 @@ export default function LinkedInJobsPage({ onBack }) {
   const fetchJobs = async (path) => {
     setLoading(true)
     setError(null)
+    setJobs([]) // Clear previous jobs immediately
 
     try {
+      const requestBody = {
+        university: university || 'Ontario Tech University',
+        program: program || 'Computer Science',
+        career_path: path,
+        location: 'Ontario, Canada'
+      }
+
+      console.log('Fetching jobs with:', requestBody)
+
       const response = await fetch('http://localhost:8000/linkedin/jobs/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          university: university || 'Ontario Tech University',
-          program: program || 'Computer Science',
-          career_path: path,
-          location: 'Canada'
-        })
+        body: JSON.stringify(requestBody),
+        cache: 'no-store' // Prevent caching
       })
 
       if (!response.ok) {
@@ -45,6 +51,7 @@ export default function LinkedInJobsPage({ onBack }) {
       }
 
       const data = await response.json()
+      console.log('Received jobs:', data.jobCount, 'jobs')
       setJobs(data.jobs || [])
     } catch (err) {
       setError(err.message)
