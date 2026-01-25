@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
-import { useRef, useState } from "react";
-import logo from "../images/pathpilot1.png";
-import { useAppContext } from "../context/AppContext";
+import { motion } from 'framer-motion'
+import { useRef, useState } from 'react'
+import logo from '../images/pathpilot1.png'
+import { useAppContext } from '../context/AppContext'
 
 export default function LandingPage({ onUpload }) {
   const fileInputRef = useRef(null);
