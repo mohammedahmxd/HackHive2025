@@ -5,6 +5,12 @@ beautifulsoup4
 pydantic
 PyPDF2
 pdfplumber
+<<<<<<< HEAD
 rapidfuzz
 google-genai
+=======
+python-multipart
+urllib3
+httpx
+>>>>>>> 0023b3af41ef3f53dc59f5777a5c9897d3ca7fa0
 python-dotenv

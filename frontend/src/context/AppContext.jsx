@@ -17,6 +17,7 @@ export const AppProvider = ({ children }) => {
   const [transcriptType, setTranscriptType] = useState(null)
   const [language, setLanguage] = useState(null)
   const [academicYear, setAcademicYear] = useState(null)
+  const [careerPath, setCareerPath] = useState(null)
 
   const value = {
     transcriptFile,
@@ -30,7 +31,9 @@ export const AppProvider = ({ children }) => {
     language,
     setLanguage,
     academicYear,
-    setAcademicYear
+    setAcademicYear,
+    careerPath,
+    setCareerPath
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
