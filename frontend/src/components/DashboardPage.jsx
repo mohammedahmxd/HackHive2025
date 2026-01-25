@@ -129,6 +129,7 @@ export default function DashboardPage({ onBack }) {
           <CourseGraph />
         </motion.div>
 
+<<<<<<< HEAD
         {/* Three Card Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -298,6 +299,9 @@ export default function DashboardPage({ onBack }) {
             )
           })}
         </motion.div>
+=======
+        <DataDashboard />
+>>>>>>> e1a5a14 (Update DashboardPage)
       </div>
 
       {/* Expanded Views */}
