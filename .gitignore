@@ -39,3 +39,17 @@ Thumbs.db
 # =========================
 .env
 .env.*
+
+# =========================
+# User uploads / test data
+# =========================
+backend/uploads/
+backend/transcript_results/
+backend/*.pdf
+backend/*_result.json
+backend/tests/*_result.json
+
+# =========================
+# Test files (optional - uncomment to exclude)
+# =========================
+# backend/tests/
