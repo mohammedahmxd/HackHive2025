@@ -11,3 +11,4 @@ python-multipart
 urllib3
 httpx
 python-dotenv
+selenium

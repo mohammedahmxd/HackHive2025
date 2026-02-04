@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -9,7 +10,9 @@ try:
 except ImportError:
     RAPIDFUZZ_AVAILABLE = False
 
-DB_PATH = Path(__file__).resolve().parents[1] / "data" / "ontariotech_courses_db.json"
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+ONTARIOTECH_PATH = DATA_DIR / "ontariotech_courses_db.json"
+TMU_CATALOG_PATH = DATA_DIR / "tmu" / "course_catalog.json"
 
 def clean_text(s: str) -> str:
     return " ".join((s or "").split())
@@ -21,16 +24,26 @@ def norm_title(title: str) -> str:
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
+def _catalog_path(school: Optional[str]) -> Path:
+    """Resolve catalog JSON path by school. 'tmu' -> tmu/course_catalog.json, else Ontario Tech."""
+    if school == "tmu":
+        return TMU_CATALOG_PATH
+    return ONTARIOTECH_PATH
+
+
 class CatalogService:
-    def __init__(self):
-        if not DB_PATH.exists():
+    def __init__(self, school: Optional[str] = None):
+        path = _catalog_path(school)
+        if not path.exists():
             self.courses: List[Dict[str, Any]] = []
             self.by_code: Dict[str, str] = {}
             self.by_title_norm: Dict[str, List[str]] = {}
             self.by_id: Dict[str, Dict[str, Any]] = {}
+            self.school = school or "ontariotech"
             return
-        
-        raw = json.loads(DB_PATH.read_text(encoding="utf-8"))
+
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        self.school = school or raw.get("meta", {}).get("school") or "ontariotech"
         self.courses: List[Dict[str, Any]] = raw.get("courses", [])
         self.by_code: Dict[str, str] = raw.get("indexes", {}).get("by_code", {})
         self.by_title_norm: Dict[str, List[str]] = raw.get("indexes", {}).get("by_title_norm", {})
@@ -116,12 +129,13 @@ class CatalogService:
         best_id = self._title_norm_list[idx][1]
         return self.by_id.get(best_id)
 
-# Singleton instance
-_catalog_service = None
+# Singleton per school (default: Ontario Tech; set CATALOG_SCHOOL=tmu for TMU)
+_catalog_services: Dict[str, CatalogService] = {}
 
-def get_catalog_service() -> CatalogService:
-    """Get or create the singleton catalog service instance."""
-    global _catalog_service
-    if _catalog_service is None:
-        _catalog_service = CatalogService()
-    return _catalog_service
+def get_catalog_service(school: Optional[str] = None) -> CatalogService:
+    """Get or create the catalog service. school from env CATALOG_SCHOOL if not set (default ontariotech)."""
+    global _catalog_services
+    key = school or os.getenv("CATALOG_SCHOOL", "ontariotech")
+    if key not in _catalog_services:
+        _catalog_services[key] = CatalogService(school=key)
+    return _catalog_services[key]

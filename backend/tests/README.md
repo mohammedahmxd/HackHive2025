@@ -29,6 +29,18 @@ Tests the full integration of all services working together.
 python tests/test_full_integration.py
 ```
 
+### `test_tmu_scraper.py`
+Unit tests for TMU calendar scrapers and course code utilities (no server or network required).
+
+**Usage:**
+```bash
+cd backend
+python -m unittest tests.test_tmu_scraper -v
+```
+Or with pytest: `python -m pytest tests/test_tmu_scraper.py -v`
+
+**Covers:** course code normalization (TMU/OT), `get_calendar_year` / `calendar_urls`, `parse_course_page` (HTML fixture), liberal table URL helpers, and extraction from Table A–style HTML.
+
 ## Running Tests
 
 Make sure the server is running for endpoint tests:

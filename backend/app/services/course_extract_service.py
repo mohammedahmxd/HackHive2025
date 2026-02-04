@@ -2,8 +2,8 @@ import re
 from typing import Tuple, List, Optional
 from app.models.transcript_schemas import ExtractedCourse
 
-# Common Ontario Tech course code pattern: 3-5 letters + 3-4 digits + optional letter
-COURSE_CODE_PATTERN = re.compile(r'\b([A-Z]{3,5}\s*\d{3,4}[A-Z]?)\b')
+# Ontario Tech: 3-5 letters + 3-4 digits + optional letter. TMU: 2-4 letters + optional space + 3 digits
+COURSE_CODE_PATTERN = re.compile(r'\b([A-Z]{2,5}\s*\d{3,4}[A-Z]?)\b')
 
 # Include transcript-style grades like PAS/CO
 GRADE_TOKEN = r'(?:[A-F][+-]?|P|F|WD|CR|NC|IP|W|PAS|CO)'
@@ -37,6 +37,22 @@ COURSE_ROW_INPROGRESS_PATTERN = re.compile(
     r'(?P<level>UG|GR)\s+'
     r'(?P<title>.+?)\s+'
     r'(?P<credits>\d+(?:\.\d+)?)\b',
+    re.IGNORECASE
+)
+
+# TMU-style rows: "CPS 109 3.0 A", "CPS 109 - Intro to CS 3.0 B+", "MTH 110 3.0"
+# 2-4 letter subject, optional space, 3 digits; then optional title then credits and optional grade
+TMU_ROW_PATTERN = re.compile(
+    r'^\s*(?P<subj>[A-Z]{2,4})\s?(?P<num>\d{3})\s+'
+    r'(?:(?P<title>.+?)\s+)?'
+    r'(?P<credits>\d+(?:\.\d+)?)\s*'
+    r'(?P<grade>' + GRADE_TOKEN + r')?\s*$',
+    re.IGNORECASE
+)
+# TMU row without credits/grade (code + optional title only)
+TMU_ROW_MINIMAL_PATTERN = re.compile(
+    r'^\s*(?P<subj>[A-Z]{2,4})\s?(?P<num>\d{3})\s*'
+    r'(?:\s*[-–:]\s*(?P<title>.+?))?\s*$',
     re.IGNORECASE
 )
 
@@ -115,6 +131,51 @@ def extract_courses_from_text(text: str) -> Tuple[List[ExtractedCourse], List[st
                 term=current_term,
                 confidence=0.85,
                 flags=["grade_missing"]
+            )
+            courses.append(course)
+            continue
+
+        # TMU-style row: CPS 109, CPS 109 3.0 A, CPS 109 - Title 3.0 B+
+        m_tmu = TMU_ROW_PATTERN.match(line)
+        if m_tmu:
+            subj = m_tmu.group("subj").upper()
+            num = m_tmu.group("num").upper()
+            code = _norm_course_code(subj, num)
+            title = _clean_title(m_tmu.group("title") or "")
+            try:
+                credits = float(m_tmu.group("credits"))
+            except (TypeError, ValueError):
+                credits = None
+            grade = (m_tmu.group("grade") or "").strip().upper() or None
+
+            course = ExtractedCourse(
+                course_code=code,
+                course_title=title or None,
+                credits=credits,
+                grade=grade,
+                term=current_term,
+                confidence=0.9,
+                flags=[]
+            )
+            courses.append(course)
+            continue
+
+        # TMU minimal: "CPS 109" or "CPS 109 - Title" (no credits/grade)
+        m_tmu_min = TMU_ROW_MINIMAL_PATTERN.match(line)
+        if m_tmu_min and len(line) < 120:
+            subj = m_tmu_min.group("subj").upper()
+            num = m_tmu_min.group("num").upper()
+            code = _norm_course_code(subj, num)
+            title = _clean_title(m_tmu_min.group("title") or "")
+
+            course = ExtractedCourse(
+                course_code=code,
+                course_title=title or None,
+                credits=None,
+                grade=None,
+                term=current_term,
+                confidence=0.75,
+                flags=["credits_missing", "grade_missing"]
             )
             courses.append(course)
             continue
