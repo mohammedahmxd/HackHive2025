@@ -4,6 +4,8 @@ import { useAppContext } from '../context/AppContext'
 import { mockUniversities } from '../data/mockData'
 import CourseGraph from './CourseGraph'
 import LinkedInJobsPage from './LinkedInJobsPage'
+import ProfessorRecommendationsPage from './ProfessorRecommendationsPage'
+import ProjectRecommendationsPage from './ProjectRecommendationsPage'
 
 export default function DashboardPage({ onBack }) {
   const { university, program, academicYear } = useAppContext()
@@ -297,6 +299,7 @@ export default function DashboardPage({ onBack }) {
             )
           })}
         </motion.div>
+        <DataDashboard />
       </div>
 
       {/* Expanded Views */}
@@ -316,125 +319,33 @@ export default function DashboardPage({ onBack }) {
       )}
 
       {expandedView === 'professor' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: '#00111F',
-            zIndex: 1000,
-            padding: '2rem',
-            overflowY: 'auto'
-          }}
-        >
-          <motion.button
-            onClick={() => setExpandedView(null)}
-            whileHover={{ x: -4, opacity: 1 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'transparent',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              marginBottom: '2rem',
-              opacity: 0.7,
-              transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back
-          </motion.button>
-
-          <div style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            color: '#ffffff',
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-          }}>
-            <h1 style={{
-              fontSize: '2.5rem',
-              fontWeight: 700,
-              marginBottom: '2rem',
-              color: 'var(--gold-bright)'
-            }}>
-              Professor Connections
-            </h1>
-            {/* Content will be added here */}
-          </div>
-        </motion.div>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#00111F',
+          zIndex: 1000,
+          overflowY: 'auto'
+        }}>
+          <ProfessorRecommendationsPage onBack={() => setExpandedView(null)} />
+        </div>
       )}
 
       {expandedView === 'project' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: '#00111F',
-            zIndex: 1000,
-            padding: '2rem',
-            overflowY: 'auto'
-          }}
-        >
-          <motion.button
-            onClick={() => setExpandedView(null)}
-            whileHover={{ x: -4, opacity: 1 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'transparent',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              marginBottom: '2rem',
-              opacity: 0.7,
-              transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back
-          </motion.button>
-
-          <div style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            color: '#ffffff',
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-          }}>
-            <h1 style={{
-              fontSize: '2.5rem',
-              fontWeight: 700,
-              marginBottom: '2rem',
-              color: 'var(--gold-bright)'
-            }}>
-              Project Recommendations
-            </h1>
-            {/* Content will be added here */}
-          </div>
-        </motion.div>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#00111F',
+          zIndex: 1000,
+          overflowY: 'auto'
+        }}>
+          <ProjectRecommendationsPage onBack={() => setExpandedView(null)} />
+        </div>
       )}
     </motion.div>
   )

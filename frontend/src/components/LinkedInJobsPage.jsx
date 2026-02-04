@@ -3,48 +3,47 @@ import { motion } from 'framer-motion'
 import { useAppContext } from '../context/AppContext'
 
 export default function LinkedInJobsPage({ onBack }) {
-  const { university, program, careerPath } = useAppContext()
+  const { university, program, selectedCareer } = useAppContext()
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [selectedCareerPath, setSelectedCareerPath] = useState(careerPath || 'Data Engineering')
 
-  const careerPaths = [
-    'Data Engineering',
-    'Software Engineering',
-    'Machine Learning Engineer',
-    'Full Stack Developer',
-    'DevOps Engineer',
-    'Cloud Engineer',
-    'Cybersecurity Analyst',
-    'Product Manager',
-    'UI/UX Designer',
-    'Data Scientist'
-  ]
+  const fetchJobs = async () => {
+    if (!selectedCareer) {
+      setError('No career path selected. Please go back and select a career.')
+      return
+    }
 
-  const fetchJobs = async (path) => {
     setLoading(true)
     setError(null)
+    setJobs([])
 
     try {
+      const requestBody = {
+        university: university || 'Ontario Tech University',
+        program: program || 'Computer Science',
+        career_path: selectedCareer.title,
+        location: 'Ontario, Canada'
+      }
+
+      console.log('Fetching jobs with:', requestBody)
+
       const response = await fetch('http://localhost:8000/linkedin/jobs/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          university: university || 'Ontario Tech University',
-          program: program || 'Computer Science',
-          career_path: path,
-          location: 'Canada'
-        })
+        body: JSON.stringify(requestBody),
+        cache: 'no-store'
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch jobs')
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Failed to fetch jobs')
       }
 
       const data = await response.json()
+      console.log('Received jobs:', data.jobCount, 'jobs')
       setJobs(data.jobs || [])
     } catch (err) {
       setError(err.message)
@@ -55,12 +54,8 @@ export default function LinkedInJobsPage({ onBack }) {
   }
 
   useEffect(() => {
-    fetchJobs(selectedCareerPath)
-  }, [selectedCareerPath])
-
-  const handleCareerPathChange = (path) => {
-    setSelectedCareerPath(path)
-  }
+    fetchJobs()
+  }, [])
 
   return (
     <motion.div
@@ -137,64 +132,46 @@ export default function LinkedInJobsPage({ onBack }) {
               </p>
             </div>
           </div>
-        </motion.div>
 
-        {/* Career Path Selector */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          style={{
-            marginBottom: '2rem',
-            background: 'linear-gradient(135deg, rgba(1, 58, 99, 0.3) 0%, rgba(0, 53, 102, 0.4) 100%)',
-            border: '1px solid var(--blue-medium)',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          }}
-        >
-          <label style={{
-            display: 'block',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: 'var(--gold-bright)',
-            letterSpacing: '0.02em',
-            textTransform: 'uppercase'
-          }}>
-            Select Career Path
-          </label>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.75rem'
-          }}>
-            {careerPaths.map((path) => (
-              <motion.button
-                key={path}
-                onClick={() => handleCareerPathChange(path)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: selectedCareerPath === path
-                    ? 'linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)'
-                    : 'rgba(255, 255, 255, 0.05)',
-                  border: selectedCareerPath === path ? 'none' : '1px solid var(--blue-medium)',
-                  borderRadius: '8px',
-                  color: selectedCareerPath === path ? 'var(--blue-dark)' : '#ffffff',
-                  fontSize: '0.875rem',
+          {/* Selected Career Badge */}
+          {selectedCareer && (
+            <div style={{
+              marginTop: '1.5rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1.5rem',
+              background: 'linear-gradient(135deg, rgba(255, 214, 10, 0.15) 0%, rgba(253, 197, 0, 0.15) 100%)',
+              border: '2px solid var(--gold-bright)',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(255, 214, 10, 0.3)'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-bright)" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div>
+                <div style={{
+                  fontSize: '0.75rem',
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-                  boxShadow: selectedCareerPath === path ? '0 4px 20px rgba(255, 214, 10, 0.4)' : 'none'
-                }}
-              >
-                {path}
-              </motion.button>
-            ))}
-          </div>
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '0.25rem'
+                }}>
+                  Selected Career Path
+                </div>
+                <div style={{
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: 'var(--gold-bright)',
+                  fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+                }}>
+                  {selectedCareer.title}
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Loading State */}
@@ -210,7 +187,7 @@ export default function LinkedInJobsPage({ onBack }) {
               fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
             }}
           >
-            <div style={{ marginBottom: '1rem' }}>Searching LinkedIn for {selectedCareerPath} jobs...</div>
+            <div style={{ marginBottom: '1rem' }}>Searching LinkedIn for {selectedCareer?.title || 'jobs'}...</div>
             <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>This may take 30-60 seconds</div>
           </motion.div>
         )}
@@ -373,7 +350,7 @@ export default function LinkedInJobsPage({ onBack }) {
               fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
             }}
           >
-            No jobs found for {selectedCareerPath}. Try selecting a different career path.
+            No jobs found for {selectedCareer?.title || 'this career path'}. Please check back later or contact support.
           </motion.div>
         )}
       </div>

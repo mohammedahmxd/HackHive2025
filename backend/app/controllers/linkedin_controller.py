@@ -1,15 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import httpx
-import time
-import asyncio
+import subprocess
+import json
 
 router = APIRouter()
 
-# Apify API Configuration
+# LinkedIn Jobs API (via RapidAPI - FREE)
 import os
-APIFY_TOKEN = os.getenv("APIFY_API_TOKEN", "your_apify_token_here")
-APIFY_ACTOR_ID = "fantastic-jobs~advanced-linkedin-job-search-api"
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "3ec64ab15emsh2415b986c338a3ep1b9a36jsn21ba3cfa5811")
+LINKEDIN_API_URL = "https://linkedin-job-search-api.p.rapidapi.com/active-jb-24h"
 
 
 class JobSearchRequest(BaseModel):
@@ -20,139 +19,154 @@ class JobSearchRequest(BaseModel):
 
 
 @router.post("/jobs/search")
-async def search_linkedin_jobs(request: JobSearchRequest):
+def search_linkedin_jobs(request: JobSearchRequest):
     """
-    Search for LinkedIn jobs based on university, program, and career path.
-    Uses Apify's LinkedIn Job Search API.
+    Search for LinkedIn jobs using /search endpoint via curl (bypasses Python DNS issues).
     """
     try:
-        # Build search query based on career path and program
-        search_query = f"{request.career_path} {request.program}"
+        print(f"\n{'='*60}")
+        print(f"Searching LinkedIn Jobs")
+        print(f"Career Path: {request.career_path}")
+        print(f"Location: {request.location}")
+        print(f"{'='*60}\n")
 
-        # Apify API URL - exactly as it works in Postman
-        apify_url = f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs"
+        # Build URL with proper filter parameters for /active-jb-24h endpoint
+        # Fetch multiple offsets to get more jobs
+        title_filter = request.career_path.replace(' ', '%20')
+        location_filter = 'Canada'
 
-        # Headers - using Bearer token exactly like Postman
-        headers = {
-            "Authorization": f"Bearer {APIFY_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        # We'll fetch with offset=0 to get as many jobs as possible
+        url = f"{LINKEDIN_API_URL}?title_filter={title_filter}&location_filter={location_filter}&limit=100&offset=0&description_type=text"
 
-        # Request body - matching your Postman format exactly
-        actor_input = {
-            "keywords": search_query,
-            "location": request.location,
-            "remote": True,
-            "maxResults": 20,
-            "sortBy": "date"
-        }
+        # Use curl via subprocess (since Postman/curl works on your machine)
+        print(f"Using RAPIDAPI_KEY: {RAPIDAPI_KEY[:10]}...{RAPIDAPI_KEY[-10:]}")
 
-        print(f"Starting Apify job search for: {search_query}")
-        print(f"Request body: {actor_input}")
+        curl_command = [
+            'curl',
+            '--request', 'GET',
+            '--url', url,
+            '--header', 'x-rapidapi-host: linkedin-job-search-api.p.rapidapi.com',
+            '--header', f'x-rapidapi-key: {RAPIDAPI_KEY}',
+            '--silent'  # Suppress progress bar
+        ]
 
-        # Use httpx with better DNS handling
-        async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
-            response = await client.post(
-                apify_url,
-                json=actor_input,
-                headers=headers
-            )
+        print(f"Executing curl command...")
 
-        print(f"Apify response status: {response.status_code}")
+        result = subprocess.run(
+            curl_command,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
 
-        if response.status_code != 201:
-            print(f"Apify API error: {response.status_code} - {response.text}")
+        if result.returncode != 0:
+            print(f"curl failed with code {result.returncode}")
+            print(f"stderr: {result.stderr}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to start Apify actor: {response.status_code} - {response.text}"
+                detail=f"curl command failed: {result.stderr}"
             )
 
-        run_data = response.json()
-        run_id = run_data["data"]["id"]
-        print(f"Apify run started with ID: {run_id}")
+        # Parse JSON response
+        try:
+            jobs_data = json.loads(result.stdout)
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON response")
+            print(f"Response: {result.stdout[:500]}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Invalid JSON response from API"
+            )
 
-        # Wait for the actor to finish (max 90 seconds)
-        dataset_id = None
-        async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
-            for attempt in range(45):  # Check every 2 seconds for 90 seconds
-                await asyncio.sleep(2)
-
-                status_url = f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs/{run_id}"
-                status_response = await client.get(status_url, headers=headers)
-
-                if status_response.status_code == 200:
-                    status_data = status_response.json()
-                    run_status = status_data["data"]["status"]
-
-                    print(f"Actor run status (attempt {attempt + 1}): {run_status}")
-
-                    if run_status == "SUCCEEDED":
-                        dataset_id = status_data["data"]["defaultDatasetId"]
-                        print(f"Actor succeeded! Dataset ID: {dataset_id}")
-                        break
-                    elif run_status in ["FAILED", "ABORTED", "TIMED-OUT"]:
-                        raise HTTPException(
-                            status_code=500,
-                            detail=f"Apify actor failed with status: {run_status}"
-                        )
-
-            if not dataset_id:
+        # Check for API quota errors
+        if isinstance(jobs_data, dict) and "message" in jobs_data:
+            error_msg = jobs_data.get("message", "")
+            if "exceeded" in error_msg.lower() and "quota" in error_msg.lower():
+                print(f"API Quota Error: {error_msg}")
                 raise HTTPException(
-                    status_code=408,
-                    detail="Job search timed out. The API is taking too long to respond."
+                    status_code=429,
+                    detail=f"LinkedIn API quota exceeded. The free tier monthly limit has been reached. Please upgrade your RapidAPI plan or wait until next month."
                 )
 
-            # Get the results from the dataset
-            dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
-            dataset_response = await client.get(dataset_url, headers=headers)
+        # Handle different response formats
+        if isinstance(jobs_data, dict):
+            jobs_list = jobs_data.get("data", jobs_data.get("jobs", []))
+        else:
+            jobs_list = jobs_data
 
-            if dataset_response.status_code != 200:
-                print(f"Failed to get dataset: {dataset_response.status_code} - {dataset_response.text}")
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to retrieve job results"
-                )
+        print(f"Retrieved {len(jobs_list)} jobs from LinkedIn API")
 
-            jobs = dataset_response.json()
-            print(f"Retrieved {len(jobs)} jobs from Apify")
-
-        # Format and return jobs - handle different field names from Apify
+        # Format jobs
         formatted_jobs = []
-        for job in jobs[:20]:  # Limit to 20 jobs
-            # Try different field names for company
-            company_name = (
-                job.get("company") or
-                job.get("companyName") or
-                job.get("company_name") or
-                job.get("employer") or
-                "Company Name Not Available"
-            )
 
-            # Try different field names for other fields
-            job_title = job.get("title") or job.get("jobTitle") or job.get("job_title") or "Position Available"
-            job_location = job.get("location") or job.get("jobLocation") or job.get("place") or request.location
-            job_url = job.get("url") or job.get("link") or job.get("jobUrl") or ""
+        for job in jobs_list:
+            # Map API fields to our format
+            title = job.get("title", "")
+            company = job.get("organization", "")
+
+            # Extract location from locations_raw array
+            location = "Canada"
+            if job.get("locations_raw") and len(job.get("locations_raw", [])) > 0:
+                address = job.get("locations_raw")[0].get("address", {})
+                locality = address.get("addressLocality", "")
+                region = address.get("addressRegion", "")
+                country = address.get("addressCountry", "")
+
+                if locality and region:
+                    location = f"{locality}, {region}"
+                elif locality:
+                    location = locality
+                elif region:
+                    location = region
+                elif country:
+                    location = country
+
+            if not title or not company:
+                continue
+
+            # Map employment_type array to string
+            employment_type = "Full-time"
+            if job.get("employment_type") and len(job.get("employment_type", [])) > 0:
+                emp_type = job.get("employment_type")[0]
+                if emp_type == "FULL_TIME":
+                    employment_type = "Full-time"
+                elif emp_type == "PART_TIME":
+                    employment_type = "Part-time"
+                elif emp_type == "INTERN":
+                    employment_type = "Internship"
+                elif emp_type == "CONTRACT":
+                    employment_type = "Contract"
 
             formatted_jobs.append({
                 "id": job.get("id", ""),
-                "title": job_title,
-                "company": company_name,
-                "location": job_location,
-                "description": (job.get("description") or job.get("jobDescription") or "")[:500],
-                "url": job_url,
-                "postedAt": job.get("postedAt") or job.get("postedDate") or job.get("date") or "Recently",
-                "employmentType": job.get("employmentType") or job.get("jobType") or "Full-time",
-                "seniorityLevel": job.get("seniorityLevel") or job.get("experienceLevel") or "Entry level",
-                "companyLogo": job.get("companyLogo") or job.get("logo") or ""
+                "title": title,
+                "company": company,
+                "location": location,
+                "description": (job.get("description", ""))[:500],
+                "url": job.get("url", ""),
+                "postedAt": job.get("date_posted", "Recently"),
+                "employmentType": employment_type,
+                "seniorityLevel": "Entry level",
+                "companyLogo": job.get("organization_logo", "")
             })
 
-        # Debug: print first job to see structure
-        if jobs:
-            print(f"Sample job data: {jobs[0]}")
+        # Debug output
+        print(f"\nFound {len(formatted_jobs)} jobs for {request.career_path}")
+        if formatted_jobs:
+            print(f"Sample jobs:")
+            for i, job in enumerate(formatted_jobs[:5]):
+                print(f"  {i+1}. {job['title']} at {job['company']} - {job['location']}")
+            print(f"\nSample raw job data:")
+            print(json.dumps(jobs_list[0] if jobs_list else {}, indent=2))
+        else:
+            print(f"No jobs found. Raw response:")
+            print(json.dumps(jobs_data, indent=2)[:1000])
+
+        print(f"\n{'='*60}\n")
 
         return {
             "success": True,
-            "query": search_query,
+            "query": request.career_path,
             "university": request.university,
             "program": request.program,
             "careerPath": request.career_path,
@@ -160,12 +174,12 @@ async def search_linkedin_jobs(request: JobSearchRequest):
             "jobs": formatted_jobs
         }
 
-    except httpx.TimeoutException:
+    except subprocess.TimeoutExpired:
         print(f"Request timeout error")
         raise HTTPException(status_code=408, detail="Request timed out")
-    except httpx.HTTPError as e:
-        print(f"HTTP exception: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"API request failed: {str(e)}")
+    except HTTPException:
+        # Re-raise HTTPExceptions (like quota errors) without wrapping
+        raise
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
         import traceback

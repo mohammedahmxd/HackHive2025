@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from dotenv import load_dotenv
+import os
 
 # Load environment variables from .env file
 load_dotenv()
@@ -9,16 +12,16 @@ load_dotenv()
 from app.controllers.plan_controller import router as plan_router
 from app.controllers.transcript_controller import router as transcript_router
 from app.controllers.catalog_controller import router as catalog_router
-
-# New AI scoring + Gemini endpoints
 from app.controllers.enrich_controller import router as enrich_router
 from app.controllers.recommend_controller import router as recommend_router
+from app.controllers.professor_controller import router as professor_router
+from app.controllers.project_controller import router as project_router
 
-# Optional: LinkedIn endpoints (keep only if the file exists)
 try:
     from app.controllers.linkedin_controller import router as linkedin_router
     HAS_LINKEDIN = True
 except Exception:
+    linkedin_router = None
     HAS_LINKEDIN = False
 
 app = FastAPI(title="PathPilot API", version="0.1.0")
@@ -68,6 +71,7 @@ app.include_router(transcript_router, prefix="/transcripts", tags=["transcripts"
 app.include_router(catalog_router, prefix="/catalog", tags=["catalog"])
 app.include_router(enrich_router, prefix="/enrich", tags=["enrich"])
 app.include_router(recommend_router, prefix="/recommend", tags=["recommend"])
-
 if HAS_LINKEDIN:
     app.include_router(linkedin_router, prefix="/linkedin", tags=["linkedin"])
+app.include_router(professor_router, prefix="/professors", tags=["professors"])
+app.include_router(project_router, prefix="/projects", tags=["projects"])

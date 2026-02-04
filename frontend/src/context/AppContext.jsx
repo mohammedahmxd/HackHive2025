@@ -12,16 +12,23 @@ export const useAppContext = () => {
 
 export const AppProvider = ({ children }) => {
   const [transcriptFile, setTranscriptFile] = useState(null)
+  const [transcriptData, setTranscriptData] = useState(null) // Parsed transcript from backend
   const [university, setUniversity] = useState(null)
   const [program, setProgram] = useState(null)
   const [transcriptType, setTranscriptType] = useState(null)
   const [language, setLanguage] = useState(null)
   const [academicYear, setAcademicYear] = useState(null)
   const [careerPath, setCareerPath] = useState(null)
+  const [careerRecommendations, setCareerRecommendations] = useState([]) // 3 career options from Gemini
+  const [selectedCareer, setSelectedCareer] = useState(null) // Full career object with description
+  const [courses, setCourses] = useState([]) // Parsed courses from transcript
+  const [enrichedCourses, setEnrichedCourses] = useState([]) // Enriched courses with catalog data
 
   const value = {
     transcriptFile,
     setTranscriptFile,
+    transcriptData,
+    setTranscriptData,
     university,
     setUniversity,
     program,
@@ -33,7 +40,15 @@ export const AppProvider = ({ children }) => {
     academicYear,
     setAcademicYear,
     careerPath,
-    setCareerPath
+    setCareerPath,
+    careerRecommendations,
+    setCareerRecommendations,
+    selectedCareer,
+    setSelectedCareer,
+    courses,
+    setCourses,
+    enrichedCourses,
+    setEnrichedCourses
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

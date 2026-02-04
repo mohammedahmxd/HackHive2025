@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { mockUniversities, mockPrograms } from '../data/mockData'
 import { useAppContext } from '../context/AppContext'
@@ -15,21 +15,130 @@ export default function ValidationPage({ onBack, onContinue }) {
     transcriptType,
     setTranscriptType,
     language,
-    setLanguage
+    setLanguage,
+    courses,
+    setEnrichedCourses,
+    setCareerRecommendations
   } = useAppContext()
 
-  const [selectedUni, setSelectedUni] = useState(university || null)
+  const [selectedUni, setSelectedUni] = useState(university || 'Ontario Tech University')
   const [selectedProgram, setSelectedProgram] = useState(program || 'Computer Science')
   const [selectedTranscript, setSelectedTranscript] = useState(transcriptType || 'Undergraduate')
   const [selectedLanguage, setSelectedLanguage] = useState(language || 'English')
   const [openDropdown, setOpenDropdown] = useState(null)
 
-  const handleContinue = () => {
+  // Update selected values when context changes (from transcript parsing)
+  useEffect(() => {
+    if (university) setSelectedUni(university)
+    if (program) setSelectedProgram(program)
+  }, [university, program])
+
+  const handleContinue = async () => {
     // Save to global state
     setUniversity(selectedUni)
     setProgram(selectedProgram)
     setTranscriptType(selectedTranscript)
     setLanguage(selectedLanguage)
+
+    // Enrich courses and get career recommendations
+    if (courses && courses.length > 0) {
+      try {
+        console.log('Enriching courses...', courses)
+
+        // Step 1: Enrich courses with catalog data
+        const enrichResponse = await fetch('http://localhost:8000/enrich/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courses: courses.map(c => ({
+              title: c.course_title || c.title,
+              grade: c.grade,
+              term: c.term
+            }))
+          })
+        })
+
+        if (enrichResponse.ok) {
+          const enrichData = await enrichResponse.json()
+          const enrichedCourses = enrichData.results
+          console.log('Enriched courses:', enrichedCourses)
+          setEnrichedCourses(enrichedCourses)
+
+          // Step 2: Get career recommendations using Gemini
+          console.log('Getting career recommendations...')
+          const recommendResponse = await fetch('http://localhost:8000/recommend/careers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courses: enrichedCourses })
+          })
+
+          if (recommendResponse.ok) {
+            const recommendData = await recommendResponse.json()
+            console.log('Career recommendations received:', recommendData)
+
+            // Save all 3 career recommendations
+            if (recommendData.careers && recommendData.careers.length > 0) {
+              setCareerRecommendations(recommendData.careers)
+              console.log('Set career recommendations:', recommendData.careers)
+              // Wait a bit to ensure state is updated before navigating
+              await new Promise(resolve => setTimeout(resolve, 100))
+            } else {
+              console.error('No careers in response:', recommendData)
+              alert('Failed to get career recommendations. Please try again.')
+              return // Don't continue if no recommendations
+            }
+          } else {
+            console.error('Failed to get recommendations:', await recommendResponse.text())
+            alert('Failed to get career recommendations. Please try again.')
+            return
+          }
+        } else {
+          console.error('Failed to enrich courses:', await enrichResponse.text())
+          alert('Failed to enrich courses. Please try again.')
+          return
+        }
+      } catch (error) {
+        console.error('Error enriching courses or getting recommendations:', error)
+        alert(`Error: ${error.message}. Please try again.`)
+        return
+      }
+    } else {
+      console.log('No courses available, skipping enrichment')
+      // For demo purposes, create mock career recommendations
+      setCareerRecommendations([
+        {
+          title: "Software Engineering",
+          description: "Build scalable applications and systems using modern programming languages and frameworks.",
+          why_recommended: [
+            "Strong foundation in programming fundamentals",
+            "Experience with software development practices",
+            "Problem-solving and analytical skills"
+          ],
+          confidence: 0.85
+        },
+        {
+          title: "Data Science",
+          description: "Analyze and interpret complex data to help organizations make informed decisions.",
+          why_recommended: [
+            "Mathematical and statistical background",
+            "Programming experience",
+            "Interest in data analysis"
+          ],
+          confidence: 0.75
+        },
+        {
+          title: "Web Development",
+          description: "Create modern, responsive web applications for businesses and consumers.",
+          why_recommended: [
+            "Understanding of programming concepts",
+            "Creative problem solving",
+            "Interest in user interfaces"
+          ],
+          confidence: 0.70
+        }
+      ])
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
 
     onContinue()
   }
