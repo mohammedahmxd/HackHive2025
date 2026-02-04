@@ -47,6 +47,40 @@ class TestNormalizeCourseId(TestCase):
         self.assertEqual(normalize_course_id("Cps 109"), "CPS109")
 
 
+class TestTmuTranscriptExtraction(TestCase):
+    """TMU-style lines in transcript text should be parsed by course_extract_service."""
+
+    def test_tmu_lines_extracted(self):
+        from app.services.course_extract_service import extract_courses_from_text
+
+        text = """
+        Fall 2023
+        CPS 109 3.0 A
+        MTH 110 3.0 B+
+        CPS 109 - Introduction to Computer Science I 3.0 A
+        Winter 2024
+        CPS 213 3.0 A-
+        MTH 207 3.0 B
+        """
+        courses, warnings = extract_courses_from_text(text)
+        codes = [c.course_code for c in courses if c.course_code]
+        self.assertIn("CPS109", codes)
+        self.assertIn("MTH110", codes)
+        self.assertIn("CPS213", codes)
+        self.assertIn("MTH207", codes)
+        self.assertGreaterEqual(len(courses), 4)
+        # At least one course should have term
+        self.assertTrue(any(c.term for c in courses))
+
+    def test_tmu_minimal_line(self):
+        from app.services.course_extract_service import extract_courses_from_text
+
+        text = "CPS 109 - Intro to CS"
+        courses, _ = extract_courses_from_text(text)
+        self.assertEqual(len(courses), 1)
+        self.assertEqual(courses[0].course_code, "CPS109")
+
+
 class TestExtractCourseIdsFromText(TestCase):
     def test_prereq_paragraph(self):
         text = "Prerequisites: CPS 109, MTH 110 and MTH 207. Not open to students who have taken CPS 106."

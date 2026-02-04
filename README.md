@@ -32,14 +32,16 @@ See [frontend/README.md](./frontend/README.md) for detailed frontend documentati
 
 ## Features
 
-- **Transcript Parsing**: Upload and parse academic transcripts (PDF)
-- **Course Catalog**: Search and match courses with Ontario Tech catalog
+- **Transcript Parsing**: Upload and parse academic transcripts (PDF); supports Ontario Tech and TMU (Toronto Metropolitan University) formats
+- **Course Catalog**: Search and match courses (Ontario Tech or TMU catalog via `CATALOG_SCHOOL`)
 - **Career Recommendations**: AI-powered career suggestions based on transcript analysis
 - **Academic Planning**: Generate semester-by-semester course plans
+- **TMU Calendar Scrapers**: Scripts to build TMU course catalog, program maps, and liberal studies pools (see [backend/TMU_CATALOG.md](./backend/TMU_CATALOG.md))
 
 ## Documentation
 
 - [backend/README.md](./backend/README.md) - Backend API documentation
 - [backend/CAREER_RECOMMENDATION.md](./backend/CAREER_RECOMMENDATION.md) - Career recommendation system
+- [backend/TMU_CATALOG.md](./backend/TMU_CATALOG.md) - TMU calendar catalog and scrapers
 - [backend/SERVICE_ARCHITECTURE.md](./backend/SERVICE_ARCHITECTURE.md) - Service architecture
 

@@ -14,31 +14,35 @@ def _infer_university_name(text: str, original_filename: str) -> Tuple[Optional[
     warnings = []
     # Try explicit text match first (some PDFs include it in text layer)
     uni_patterns = [
-        r'Ontario\s+Tech\s+University',
-        r'University\s+of\s+Ontario\s+Institute\s+of\s+Technology',
+        (r'Ontario\s+Tech\s+University|University\s+of\s+Ontario\s+Institute\s+of\s+Technology', "Ontario Tech University"),
+        (r'Toronto\s+Metropolitan\s+University|TMU|Ryerson\s+University', "Toronto Metropolitan University"),
     ]
-    for p in uni_patterns:
+    for p, name in uni_patterns:
         if re.search(p, text, re.IGNORECASE):
-            return "Ontario Tech University", warnings
+            return name, warnings
 
     # Heuristic fallback from filename
-    if "otu" in (original_filename or "").lower() or "ontariotech" in (original_filename or "").lower():
+    fname = (original_filename or "").lower()
+    if "otu" in fname or "ontariotech" in fname:
         warnings.append("University name inferred from filename (no explicit university name found in PDF text layer)")
         return "Ontario Tech University", warnings
+    if "tmu" in fname or "torontomu" in fname or "ryerson" in fname:
+        warnings.append("University name inferred from filename (no explicit university name found in PDF text layer)")
+        return "Toronto Metropolitan University", warnings
 
     warnings.append("University name not found in transcript text")
     return None, warnings
 
 def _extract_program_name(text: str) -> Tuple[Optional[str], List[str]]:
     warnings = []
-    # From your PDF, "Major: Computer Science Co-op" exists in text
-    m = re.search(r'\bMajor:\s*(.+)\b', text, re.IGNORECASE)
-    if m:
-        prog = m.group(1).strip()
-        prog = re.sub(r'\s+', ' ', prog)
-        # stop at obvious next labels if the PDF extraction merges lines weirdly
-        prog = re.split(r'\b(Minor:|College:|Curriculum Information|Primary Degree)\b', prog)[0].strip()
-        return prog or None, warnings
+    # Major: (Ontario Tech), Program: (TMU and others), Degree:
+    for pattern in (r'\bMajor:\s*(.+?)(?=\n|Minor:|College:|Curriculum|Primary Degree|$)', r'\bProgram:\s*(.+?)(?=\n|Minor:|College:|Curriculum|$)', r'\bDegree:\s*(.+?)(?=\n|Minor:|College:|Curriculum|$)'):
+        m = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+        if m:
+            prog = m.group(1).strip()
+            prog = re.sub(r'\s+', ' ', prog)
+            prog = re.split(r'\b(Minor:|College:|Curriculum Information|Primary Degree)\b', prog)[0].strip()
+            return prog or None, warnings
 
     warnings.append("Program/Major not found in transcript text")
     return None, warnings

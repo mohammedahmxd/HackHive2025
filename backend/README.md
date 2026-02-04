@@ -58,9 +58,13 @@ backend/
 │   │   ├── pdf_text_service.py
 │   │   ├── course_extract_service.py
 │   │   └── catalog_service.py
-│   └── data/                 # JSON database storage
+│   ├── data/                 # JSON database storage
+│   │   └── tmu/              # TMU catalog data (run scripts to generate)
+│   └── utils/                # Shared utilities (e.g. course_codes)
 ├── scripts/                  # Utility scripts
-│   └── ontariotech_catalog_build.py
+│   ├── ontariotech_catalog_build.py
+│   ├── tmu_catalog_scraper.py
+│   └── tmu_liberal_tables_scraper.py
 ├── tests/                    # Test scripts
 ├── uploads/                  # Uploaded PDFs (gitignored)
 ├── transcript_results/       # Parsed results (gitignored)
@@ -103,6 +107,7 @@ curl "http://localhost:8000/catalog/search?title=computer%20science"
 Test scripts are available in the `tests/` directory:
 
 - `test_transcript_parser.py` - Test transcript parsing
+- `test_tmu_scraper.py` - TMU scrapers and course code unit tests (`python -m unittest tests.test_tmu_scraper -v`)
 - `test_all_endpoints.py` - Test all API endpoints
 - `test_full_integration.py` - Test service integration
 
@@ -128,6 +133,7 @@ Test scripts are available in the `tests/` directory:
 
 - [SERVICE_ARCHITECTURE.md](./SERVICE_ARCHITECTURE.md) - Service architecture details
 - [scripts/README.md](./scripts/README.md) - Course catalog scraper guide
+- [TMU_CATALOG.md](./TMU_CATALOG.md) - TMU calendar catalog and scrapers (set `TMU_CALENDAR_YEAR`, `CATALOG_SCHOOL=tmu`)
 - [CAREER_RECOMMENDATION.md](./CAREER_RECOMMENDATION.md) - Career recommendation system guide
 
 ## 🐛 Troubleshooting

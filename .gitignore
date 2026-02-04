@@ -52,6 +52,10 @@ backend/*_result.json
 backend/transcript_parse_result.json
 backend/tests/*_result.json
 
+# TMU catalog scraped data (run scripts to generate)
+backend/app/data/tmu/*.json
+!backend/app/data/tmu/.gitkeep
+
 # =========================
 # Test files (optional - uncomment to exclude)
 # =========================
