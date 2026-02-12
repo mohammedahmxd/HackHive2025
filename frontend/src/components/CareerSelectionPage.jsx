@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAppContext } from '../context/AppContext'
 
 export default function CareerSelectionPage({ onBack, onSelectCareer }) {
-  const { careerRecommendations } = useAppContext()
+  const { careerRecommendations, highContrast, reduceMotion } = useAppContext()
   const [selectedIndex, setSelectedIndex] = useState(null)
 
   console.log('CareerSelectionPage - Career recommendations:', careerRecommendations)
@@ -16,10 +16,10 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={!reduceMotion ? { opacity: 0, y: 40 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -40 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      exit={!reduceMotion ? { opacity: 0, y: -40 } : { opacity: 1 }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{
         minHeight: '100vh',
         padding: '2rem',
@@ -30,7 +30,7 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
       {/* Back Button */}
       <motion.button
         onClick={onBack}
-        whileHover={{ x: -4, opacity: 1 }}
+        whileHover={!reduceMotion ? { x: -4, opacity: 1 } : {}}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -55,9 +55,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
       <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', flex: 1 }}>
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={!reduceMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
           style={{ marginBottom: '3rem', textAlign: 'center' }}
         >
           <h1 style={{
@@ -65,13 +65,13 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
             fontWeight: 700,
             marginBottom: '1rem',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-            color: 'var(--gold-bright)'
+            color: highContrast ? '#ffffff' : 'var(--gold-bright)'
           }}>
             Choose Your Career Path
           </h1>
           <p style={{
             fontSize: '1.125rem',
-            opacity: 0.8,
+            opacity: highContrast ? 1 : 0.8,
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
             color: '#ffffff'
           }}>
@@ -90,32 +90,34 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
             {careerRecommendations.map((career, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={!reduceMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                whileHover={{
+                transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : (0.2 + index * 0.1) }}
+                whileHover={!reduceMotion ? {
                   y: -8,
                   scale: 1.02,
                   boxShadow: selectedIndex === index
-                    ? '0 16px 48px rgba(255, 214, 10, 0.4)'
-                    : '0 12px 36px rgba(0, 53, 102, 0.3)'
-                }}
+                    ? (highContrast ? '0 16px 48px rgba(255, 255, 255, 0.5)' : '0 16px 48px rgba(255, 214, 10, 0.4)')
+                    : (highContrast ? '0 12px 36px rgba(255, 255, 255, 0.3)' : '0 12px 36px rgba(0, 53, 102, 0.3)')
+                } : {}}
                 onClick={() => setSelectedIndex(index)}
                 style={{
-                  background: selectedIndex === index
-                    ? 'linear-gradient(135deg, rgba(255, 214, 10, 0.15) 0%, rgba(253, 197, 0, 0.15) 100%)'
-                    : 'linear-gradient(135deg, rgba(1, 58, 99, 0.3) 0%, rgba(0, 53, 102, 0.4) 100%)',
+                  background: highContrast
+                    ? (selectedIndex === index ? '#ffffff' : '#1a1a1a')
+                    : (selectedIndex === index
+                      ? 'linear-gradient(135deg, rgba(255, 214, 10, 0.15) 0%, rgba(253, 197, 0, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(1, 58, 99, 0.3) 0%, rgba(0, 53, 102, 0.4) 100%)'),
                   border: selectedIndex === index
-                    ? '2px solid var(--gold-bright)'
-                    : '2px solid var(--blue-medium)',
+                    ? (highContrast ? '3px solid #ffffff' : '2px solid var(--gold-bright)')
+                    : (highContrast ? '2px solid #666666' : '2px solid var(--blue-medium)'),
                   borderRadius: '16px',
                   padding: '2rem',
                   cursor: 'pointer',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   position: 'relative',
                   boxShadow: selectedIndex === index
-                    ? '0 12px 40px rgba(255, 214, 10, 0.3)'
-                    : '0 4px 12px rgba(0, 0, 0, 0.2)'
+                    ? (highContrast ? '0 8px 24px rgba(255, 255, 255, 0.4)' : '0 12px 40px rgba(255, 214, 10, 0.3)')
+                    : (highContrast ? '0 2px 8px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.2)')
                 }}
               >
                 {/* Confidence Badge */}
@@ -137,7 +139,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                 <h2 style={{
                   fontSize: '1.75rem',
                   fontWeight: 700,
-                  color: selectedIndex === index ? 'var(--gold-bright)' : '#ffffff',
+                  color: highContrast
+                    ? (selectedIndex === index ? '#000000' : '#ffffff')
+                    : (selectedIndex === index ? 'var(--gold-bright)' : '#ffffff'),
                   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
                   marginBottom: '1rem',
                   marginTop: '1rem',
@@ -149,7 +153,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                 {/* Description */}
                 <p style={{
                   fontSize: '1rem',
-                  color: 'rgba(255, 255, 255, 0.9)',
+                  color: highContrast
+                    ? (selectedIndex === index ? '#000000' : '#ffffff')
+                    : 'rgba(255, 255, 255, 0.9)',
                   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
                   lineHeight: 1.6,
                   marginBottom: '1.5rem'
@@ -159,13 +165,17 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
 
                 {/* Why Recommended */}
                 <div style={{
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderTop: highContrast
+                    ? (selectedIndex === index ? '2px solid #000000' : '1px solid #666666')
+                    : '1px solid rgba(255, 255, 255, 0.1)',
                   paddingTop: '1.5rem'
                 }}>
                   <h3 style={{
                     fontSize: '0.875rem',
                     fontWeight: 600,
-                    color: 'var(--gold-bright)',
+                    color: highContrast
+                      ? (selectedIndex === index ? '#000000' : '#ffffff')
+                      : 'var(--gold-bright)',
                     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
                     marginBottom: '1rem',
                     textTransform: 'uppercase',
@@ -184,7 +194,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                     {career.why_recommended.map((reason, i) => (
                       <li key={i} style={{
                         fontSize: '0.875rem',
-                        color: 'rgba(255, 255, 255, 0.8)',
+                        color: highContrast
+                          ? (selectedIndex === index ? '#000000' : '#ffffff')
+                          : 'rgba(255, 255, 255, 0.8)',
                         fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
                         paddingLeft: '1.5rem',
                         position: 'relative'
@@ -192,7 +204,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                         <span style={{
                           position: 'absolute',
                           left: 0,
-                          color: 'var(--gold-bright)'
+                          color: highContrast
+                            ? (selectedIndex === index ? '#000000' : '#ffffff')
+                            : 'var(--gold-bright)'
                         }}>•</span>
                         {reason}
                       </li>
@@ -203,7 +217,7 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                 {/* Selection Indicator */}
                 {selectedIndex === index && (
                   <motion.div
-                    initial={{ scale: 0 }}
+                    initial={!reduceMotion ? { scale: 0 } : { scale: 1 }}
                     animate={{ scale: 1 }}
                     style={{
                       position: 'absolute',
@@ -212,13 +226,13 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      background: 'var(--gold-bright)',
+                      background: highContrast ? '#000000' : 'var(--gold-bright)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue-dark)" strokeWidth="3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={highContrast ? '#ffffff' : 'var(--blue-dark)'} strokeWidth="3">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </motion.div>
@@ -241,9 +255,9 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
         {/* Continue Button */}
         {careerRecommendations.length > 0 && (
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={!reduceMotion ? { opacity: 0 } : { opacity: 1 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.5 }}
             style={{
               display: 'flex',
               justifyContent: 'center',
@@ -253,13 +267,17 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
             <motion.button
               onClick={handleSelectCareer}
               disabled={selectedIndex === null}
-              whileHover={selectedIndex !== null ? {
+              whileHover={selectedIndex !== null && !reduceMotion ? {
                 scale: 1.05,
-                boxShadow: '0 12px 40px rgba(255, 214, 10, 0.5)'
+                boxShadow: highContrast ? '0 8px 24px rgba(255, 255, 255, 0.5)' : '0 12px 40px rgba(255, 214, 10, 0.5)'
               } : {}}
-              whileTap={selectedIndex !== null ? { scale: 0.95 } : {}}
-              animate={selectedIndex !== null ? {
-                boxShadow: [
+              whileTap={selectedIndex !== null && !reduceMotion ? { scale: 0.95 } : {}}
+              animate={selectedIndex !== null && !reduceMotion ? {
+                boxShadow: highContrast ? [
+                  '0 4px 16px rgba(255, 255, 255, 0.3)',
+                  '0 4px 16px rgba(255, 255, 255, 0.5)',
+                  '0 4px 16px rgba(255, 255, 255, 0.3)',
+                ] : [
                   '0 8px 32px rgba(255, 214, 10, 0.4)',
                   '0 8px 32px rgba(255, 214, 10, 0.6)',
                   '0 8px 32px rgba(255, 214, 10, 0.4)',
@@ -274,17 +292,23 @@ export default function CareerSelectionPage({ onBack, onSelectCareer }) {
               }}
               style={{
                 padding: '1rem 3rem',
-                background: selectedIndex !== null
-                  ? 'linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)'
-                  : 'rgba(255, 255, 255, 0.1)',
-                border: 'none',
+                background: highContrast
+                  ? (selectedIndex !== null ? '#ffffff' : '#333333')
+                  : (selectedIndex !== null
+                    ? 'linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)'
+                    : 'rgba(255, 255, 255, 0.1)'),
+                border: highContrast ? (selectedIndex !== null ? '2px solid #ffffff' : '2px solid #666666') : 'none',
                 borderRadius: '12px',
-                color: selectedIndex !== null ? 'var(--blue-dark)' : 'rgba(255, 255, 255, 0.5)',
+                color: highContrast
+                  ? (selectedIndex !== null ? '#000000' : '#999999')
+                  : (selectedIndex !== null ? 'var(--blue-dark)' : 'rgba(255, 255, 255, 0.5)'),
                 fontSize: '1.125rem',
                 fontWeight: 700,
                 cursor: selectedIndex !== null ? 'pointer' : 'not-allowed',
                 fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-                boxShadow: selectedIndex !== null ? '0 8px 32px rgba(255, 214, 10, 0.4)' : 'none',
+                boxShadow: selectedIndex !== null
+                  ? (highContrast ? '0 4px 16px rgba(255, 255, 255, 0.3)' : '0 8px 32px rgba(255, 214, 10, 0.4)')
+                  : 'none',
                 transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 opacity: selectedIndex !== null ? 1 : 0.5
               }}

@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext'
 export default function LandingPage({ onUpload }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const { setTranscriptFile, setTranscriptData, setUniversity, setProgram, setCourses } = useAppContext();
+  const { setTranscriptFile, setTranscriptData, setUniversity, setProgram, setCourses, highContrast, reduceMotion } = useAppContext();
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -61,10 +61,10 @@ export default function LandingPage({ onUpload }) {
 
   return (
     <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={!reduceMotion ? { opacity: 0, y: 40 } : { opacity: 1 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -40 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        exit={!reduceMotion ? { opacity: 0, y: -40 } : { opacity: 1 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{
           position: "relative",
           display: "flex",
@@ -78,61 +78,69 @@ export default function LandingPage({ onUpload }) {
         }}
       >
       {/* Animated gradient orbs */}
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        style={{
-          position: 'absolute',
-          top: '10%',
-          left: '10%',
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(255, 214, 10, 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-      <motion.div
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2
-        }}
-        style={{
-          position: 'absolute',
-          bottom: '10%',
-          right: '10%',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(0, 53, 102, 0.2) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(60px)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
+      {!reduceMotion && (
+        <>
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            style={{
+              position: 'absolute',
+              top: '10%',
+              left: '10%',
+              width: '400px',
+              height: '400px',
+              background: highContrast
+                ? 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)'
+                : 'radial-gradient(circle, rgba(255, 214, 10, 0.15) 0%, transparent 70%)',
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+          <motion.div
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.2, 0.4, 0.2],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2
+            }}
+            style={{
+              position: 'absolute',
+              bottom: '10%',
+              right: '10%',
+              width: '500px',
+              height: '500px',
+              background: highContrast
+                ? 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%)'
+                : 'radial-gradient(circle, rgba(0, 53, 102, 0.2) 0%, transparent 70%)',
+              borderRadius: '50%',
+              filter: 'blur(60px)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+        </>
+      )}
       <motion.img
         src={logo}
         alt="PathPilot Logo"
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={!reduceMotion ? { scale: 0.8, opacity: 0 } : { opacity: 1 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{
-          duration: 0.6,
-          delay: 0.2,
+          duration: reduceMotion ? 0 : 0.6,
+          delay: reduceMotion ? 0 : 0.2,
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
         style={{
@@ -141,13 +149,14 @@ export default function LandingPage({ onUpload }) {
           width: "180px",
           height: "auto",
           marginBottom: "1.5rem",
+          filter: highContrast ? 'brightness(1.2) contrast(1.3)' : 'none'
         }}
       />
 
       <motion.h1
-        initial={{ opacity: 0, y: 20 }}
+        initial={!reduceMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
+        transition={{ duration: reduceMotion ? 0 : 0.6, delay: reduceMotion ? 0 : 0.3 }}
         style={{
           position: "relative",
           zIndex: 1,
@@ -156,9 +165,9 @@ export default function LandingPage({ onUpload }) {
           letterSpacing: "-0.04em",
           marginBottom: "1rem",
           fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-          color: "var(--gold-bright)",
-          textShadow: "0 0 40px rgba(255, 214, 10, 0.3)",
-          filter: "drop-shadow(0 4px 20px rgba(255, 214, 10, 0.2))",
+          color: highContrast ? "#ffffff" : "var(--gold-bright)",
+          textShadow: highContrast ? "0 2px 4px rgba(0, 0, 0, 0.8)" : "0 0 40px rgba(255, 214, 10, 0.3)",
+          filter: highContrast ? "none" : "drop-shadow(0 4px 20px rgba(255, 214, 10, 0.2))",
           lineHeight: "1.1",
         }}
       >
@@ -166,9 +175,9 @@ export default function LandingPage({ onUpload }) {
       </motion.h1>
 
       <motion.p
-        initial={{ opacity: 0, y: 20 }}
+        initial={!reduceMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
+        transition={{ duration: reduceMotion ? 0 : 0.6, delay: reduceMotion ? 0 : 0.4 }}
         style={{
           position: "relative",
           zIndex: 1,
@@ -177,8 +186,9 @@ export default function LandingPage({ onUpload }) {
           marginBottom: "3rem",
           maxWidth: "600px",
           lineHeight: "1.6",
-          opacity: 0.9,
+          opacity: highContrast ? 1 : 0.9,
           fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+          color: highContrast ? "#ffffff" : "rgba(255, 255, 255, 0.9)"
         }}
       >
         Navigate your academic journey and discover your career path
@@ -195,10 +205,14 @@ export default function LandingPage({ onUpload }) {
       <motion.button
         onClick={handleButtonClick}
         disabled={uploading}
-        whileHover={!uploading ? { scale: 1.05, y: -2, boxShadow: "0 12px 40px rgba(255, 214, 10, 0.5)" } : {}}
-        whileTap={!uploading ? { scale: 0.98 } : {}}
-        animate={!uploading ? {
-          boxShadow: [
+        whileHover={!uploading && !reduceMotion ? { scale: 1.05, y: -2, boxShadow: highContrast ? "0 8px 20px rgba(255, 255, 255, 0.5)" : "0 12px 40px rgba(255, 214, 10, 0.5)" } : {}}
+        whileTap={!uploading && !reduceMotion ? { scale: 0.98 } : {}}
+        animate={!uploading && !reduceMotion ? {
+          boxShadow: highContrast ? [
+            "0 4px 16px rgba(255, 255, 255, 0.3)",
+            "0 4px 16px rgba(255, 255, 255, 0.5)",
+            "0 4px 16px rgba(255, 255, 255, 0.3)",
+          ] : [
             "0 8px 32px rgba(255, 214, 10, 0.4)",
             "0 8px 32px rgba(255, 214, 10, 0.6)",
             "0 8px 32px rgba(255, 214, 10, 0.4)",
@@ -221,18 +235,18 @@ export default function LandingPage({ onUpload }) {
           padding: "1rem 2rem",
           fontSize: "1.05rem",
           fontWeight: 600,
-          border: "none",
+          border: highContrast ? "2px solid #ffffff" : "none",
           borderRadius: "12px",
           background: uploading
-            ? "var(--gray-medium)"
-            : "linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)",
-          color: uploading ? "#ffffff" : "var(--blue-dark)",
+            ? (highContrast ? "#333333" : "var(--gray-medium)")
+            : (highContrast ? "#ffffff" : "linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-medium) 100%)"),
+          color: uploading ? "#ffffff" : (highContrast ? "#000000" : "var(--blue-dark)"),
           cursor: uploading ? "not-allowed" : "pointer",
           transition: "all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
           fontFamily: "Inter, system-ui, -apple-system, sans-serif",
           boxShadow: uploading
             ? "none"
-            : "0 4px 20px rgba(255, 214, 10, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+            : (highContrast ? "0 4px 16px rgba(255, 255, 255, 0.3)" : "0 4px 20px rgba(255, 214, 10, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)"),
         }}
       >
         <svg

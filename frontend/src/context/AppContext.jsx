@@ -24,6 +24,10 @@ export const AppProvider = ({ children }) => {
   const [courses, setCourses] = useState([]) // Parsed courses from transcript
   const [enrichedCourses, setEnrichedCourses] = useState([]) // Enriched courses with catalog data
 
+  // Accessibility settings
+  const [highContrast, setHighContrast] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
+
   const value = {
     transcriptFile,
     setTranscriptFile,
@@ -48,7 +52,11 @@ export const AppProvider = ({ children }) => {
     courses,
     setCourses,
     enrichedCourses,
-    setEnrichedCourses
+    setEnrichedCourses,
+    highContrast,
+    setHighContrast,
+    reduceMotion,
+    setReduceMotion
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -8,7 +8,7 @@ import ProfessorRecommendationsPage from './ProfessorRecommendationsPage'
 import ProjectRecommendationsPage from './ProjectRecommendationsPage'
 
 export default function DashboardPage({ onBack }) {
-  const { university, program, academicYear } = useAppContext()
+  const { university, program, academicYear, highContrast, reduceMotion } = useAppContext()
   const [hoveredCard, setHoveredCard] = useState(null)
   const [expandedView, setExpandedView] = useState(null)
 
@@ -17,10 +17,10 @@ export default function DashboardPage({ onBack }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={!reduceMotion ? { opacity: 0, y: 40 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -40 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      exit={!reduceMotion ? { opacity: 0, y: -40 } : { opacity: 1 }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{
         minHeight: '100vh',
         padding: '2rem',
@@ -30,7 +30,7 @@ export default function DashboardPage({ onBack }) {
     >
       <motion.button
         onClick={onBack}
-        whileHover={{ x: -4, opacity: 1 }}
+        whileHover={!reduceMotion ? { x: -4, opacity: 1 } : {}}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -59,9 +59,9 @@ export default function DashboardPage({ onBack }) {
         flex: 1
       }}>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={!reduceMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -79,7 +79,8 @@ export default function DashboardPage({ onBack }) {
                 width: '48px',
                 height: '48px',
                 objectFit: 'contain',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                filter: highContrast ? 'brightness(1.2) contrast(1.3)' : 'none'
               }}
               onError={(e) => { e.target.style.display = 'none' }}
             />
@@ -96,7 +97,7 @@ export default function DashboardPage({ onBack }) {
           <div style={{
             fontSize: '1.5rem',
             fontWeight: 600,
-            color: 'rgba(255, 255, 255, 0.8)',
+            color: highContrast ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
           }}>
             {program}
@@ -104,7 +105,7 @@ export default function DashboardPage({ onBack }) {
           <div style={{
             fontSize: '1.25rem',
             fontWeight: 500,
-            color: 'var(--gold-bright)',
+            color: highContrast ? '#ffffff' : 'var(--gold-bright)',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
           }}>
             {academicYear || 'Year 1'}
@@ -113,9 +114,9 @@ export default function DashboardPage({ onBack }) {
 
         {/* Course Requirement Graph */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={!reduceMotion ? { opacity: 0, y: 30 } : { opacity: 1 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={{ duration: reduceMotion ? 0 : 0.6, delay: reduceMotion ? 0 : 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div style={{
             fontSize: '1.25rem',
@@ -132,9 +133,9 @@ export default function DashboardPage({ onBack }) {
 
         {/* Three Card Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={!reduceMotion ? { opacity: 0, y: 30 } : { opacity: 1 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={{ duration: reduceMotion ? 0 : 0.6, delay: reduceMotion ? 0 : 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           style={{
             marginTop: '3rem',
             display: 'flex',
@@ -194,16 +195,20 @@ export default function DashboardPage({ onBack }) {
             return (
               <motion.div
                 key={cardType}
-                animate={{ flex: flexValue }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                onMouseEnter={() => setHoveredCard(cardType)}
-                onMouseLeave={() => setHoveredCard(null)}
+                animate={!reduceMotion ? { flex: flexValue } : { flex: 1 }}
+                transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                onMouseEnter={() => !reduceMotion && setHoveredCard(cardType)}
+                onMouseLeave={() => !reduceMotion && setHoveredCard(null)}
                 onClick={() => setExpandedView(cardType)}
                 style={{
-                  background: isHovered
-                    ? 'linear-gradient(135deg, rgba(1, 58, 99, 0.5) 0%, rgba(0, 53, 102, 0.6) 100%)'
-                    : 'linear-gradient(135deg, rgba(1, 58, 99, 0.3) 0%, rgba(0, 53, 102, 0.4) 100%)',
-                  border: '2px solid ' + (isHovered ? 'var(--gold-bright)' : 'var(--blue-medium)'),
+                  background: highContrast
+                    ? (isHovered ? '#ffffff' : '#1a1a1a')
+                    : (isHovered
+                      ? 'linear-gradient(135deg, rgba(1, 58, 99, 0.5) 0%, rgba(0, 53, 102, 0.6) 100%)'
+                      : 'linear-gradient(135deg, rgba(1, 58, 99, 0.3) 0%, rgba(0, 53, 102, 0.4) 100%)'),
+                  border: highContrast
+                    ? (isHovered ? '3px solid #ffffff' : '2px solid #666666')
+                    : ('2px solid ' + (isHovered ? 'var(--gold-bright)' : 'var(--blue-medium)')),
                   borderRadius: '16px',
                   cursor: 'pointer',
                   display: 'flex',
@@ -214,24 +219,28 @@ export default function DashboardPage({ onBack }) {
                   overflow: 'hidden',
                   position: 'relative',
                   padding: '2rem',
-                  boxShadow: isHovered
-                    ? '0 12px 40px rgba(255, 214, 10, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                    : '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                  boxShadow: highContrast
+                    ? (isHovered ? '0 8px 24px rgba(255, 255, 255, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.5)')
+                    : (isHovered
+                      ? '0 12px 40px rgba(255, 214, 10, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)'),
                   transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   backdropFilter: 'blur(10px)'
                 }}
               >
                 {/* Logo */}
                 <motion.div
-                  animate={{
+                  animate={!reduceMotion ? {
                     scale: isHovered ? 1.15 : 1,
                     rotate: isHovered ? 5 : 0
-                  }}
+                  } : {}}
                   transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                   style={{
-                    color: isHovered ? data.color : 'rgba(255, 255, 255, 0.6)',
+                    color: highContrast
+                      ? (isHovered ? '#000000' : '#ffffff')
+                      : (isHovered ? data.color : 'rgba(255, 255, 255, 0.6)'),
                     transition: 'color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    filter: isHovered ? `drop-shadow(0 0 20px ${data.color}40)` : 'none'
+                    filter: isHovered && !highContrast ? `drop-shadow(0 0 20px ${data.color}40)` : 'none'
                   }}
                 >
                   {data.logo}
@@ -239,7 +248,7 @@ export default function DashboardPage({ onBack }) {
 
                 {/* Title and Subtitle */}
                 <motion.div
-                  animate={{ scale: isHovered ? 1.05 : 1 }}
+                  animate={!reduceMotion ? { scale: isHovered ? 1.05 : 1 } : {}}
                   transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                   style={{
                     display: 'flex',
@@ -252,7 +261,9 @@ export default function DashboardPage({ onBack }) {
                   <div style={{
                     fontSize: isHovered ? '1.75rem' : '1.5rem',
                     fontWeight: 700,
-                    color: isHovered ? 'var(--gold-bright)' : '#ffffff',
+                    color: highContrast
+                      ? (isHovered ? '#000000' : '#ffffff')
+                      : (isHovered ? 'var(--gold-bright)' : '#ffffff'),
                     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
                     transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                     letterSpacing: '-0.02em'
@@ -260,17 +271,20 @@ export default function DashboardPage({ onBack }) {
                     {data.title}
                   </div>
                   <motion.div
-                    animate={{
+                    animate={!reduceMotion ? {
                       opacity: isHovered ? 1 : 0.5,
                       y: isHovered ? 0 : 5
-                    }}
+                    } : {}}
                     transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                     style={{
                       fontSize: '1rem',
                       fontWeight: 500,
-                      color: 'rgba(255, 255, 255, 0.8)',
+                      color: highContrast
+                        ? (isHovered ? '#000000' : '#ffffff')
+                        : 'rgba(255, 255, 255, 0.8)',
                       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-                      maxWidth: '280px'
+                      maxWidth: '280px',
+                      opacity: highContrast ? 1 : (isHovered ? 1 : 0.5)
                     }}
                   >
                     {data.subtitle}
@@ -279,15 +293,15 @@ export default function DashboardPage({ onBack }) {
 
                 {/* Arrow indicator on hover */}
                 <motion.div
-                  animate={{
+                  animate={!reduceMotion ? {
                     opacity: isHovered ? 1 : 0,
                     y: isHovered ? 0 : 10
-                  }}
+                  } : { opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                   style={{
                     position: 'absolute',
                     bottom: '1.5rem',
-                    color: 'var(--gold-bright)'
+                    color: highContrast ? '#000000' : 'var(--gold-bright)'
                   }}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -299,7 +313,6 @@ export default function DashboardPage({ onBack }) {
             )
           })}
         </motion.div>
-        <DataDashboard />
       </div>
 
       {/* Expanded Views */}

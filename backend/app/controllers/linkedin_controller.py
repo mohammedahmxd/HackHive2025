@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import subprocess
+import requests
 import json
 
 router = APIRouter()
 
 # LinkedIn Jobs API (via RapidAPI - FREE)
 import os
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "3ec64ab15emsh2415b986c338a3ep1b9a36jsn21ba3cfa5811")
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "c535adefe0msh1ec28265d66ef67p158a96jsn9a1a799bd4da")
 LINKEDIN_API_URL = "https://linkedin-job-search-api.p.rapidapi.com/active-jb-24h"
 
 
@@ -21,7 +21,7 @@ class JobSearchRequest(BaseModel):
 @router.post("/jobs/search")
 def search_linkedin_jobs(request: JobSearchRequest):
     """
-    Search for LinkedIn jobs using /search endpoint via curl (bypasses Python DNS issues).
+    Search for LinkedIn jobs using requests library.
     """
     try:
         print(f"\n{'='*60}")
@@ -31,48 +31,52 @@ def search_linkedin_jobs(request: JobSearchRequest):
         print(f"{'='*60}\n")
 
         # Build URL with proper filter parameters for /active-jb-24h endpoint
-        # Fetch multiple offsets to get more jobs
-        title_filter = request.career_path.replace(' ', '%20')
+        title_filter = request.career_path
         location_filter = 'Canada'
 
-        # We'll fetch with offset=0 to get as many jobs as possible
-        url = f"{LINKEDIN_API_URL}?title_filter={title_filter}&location_filter={location_filter}&limit=100&offset=0&description_type=text"
+        # Query parameters
+        params = {
+            'title_filter': title_filter,
+            'location_filter': location_filter,
+            'limit': 100,
+            'offset': 0,
+            'description_type': 'text'
+        }
 
-        # Use curl via subprocess (since Postman/curl works on your machine)
+        # Headers for RapidAPI
+        headers = {
+            'x-rapidapi-host': 'linkedin-job-search-api.p.rapidapi.com',
+            'x-rapidapi-key': RAPIDAPI_KEY
+        }
+
         print(f"Using RAPIDAPI_KEY: {RAPIDAPI_KEY[:10]}...{RAPIDAPI_KEY[-10:]}")
+        print(f"Making request to: {LINKEDIN_API_URL}")
+        print(f"Params: {params}")
 
-        curl_command = [
-            'curl',
-            '--request', 'GET',
-            '--url', url,
-            '--header', 'x-rapidapi-host: linkedin-job-search-api.p.rapidapi.com',
-            '--header', f'x-rapidapi-key: {RAPIDAPI_KEY}',
-            '--silent'  # Suppress progress bar
-        ]
-
-        print(f"Executing curl command...")
-
-        result = subprocess.run(
-            curl_command,
-            capture_output=True,
-            text=True,
+        # Make request using requests library
+        response = requests.get(
+            LINKEDIN_API_URL,
+            params=params,
+            headers=headers,
             timeout=30
         )
 
-        if result.returncode != 0:
-            print(f"curl failed with code {result.returncode}")
-            print(f"stderr: {result.stderr}")
+        print(f"Response status code: {response.status_code}")
+
+        if response.status_code != 200:
+            print(f"API returned non-200 status: {response.status_code}")
+            print(f"Response text: {response.text[:500]}")
             raise HTTPException(
-                status_code=500,
-                detail=f"curl command failed: {result.stderr}"
+                status_code=response.status_code,
+                detail=f"LinkedIn API returned status {response.status_code}: {response.text[:200]}"
             )
 
         # Parse JSON response
         try:
-            jobs_data = json.loads(result.stdout)
+            jobs_data = response.json()
         except json.JSONDecodeError as e:
             print(f"Failed to parse JSON response")
-            print(f"Response: {result.stdout[:500]}")
+            print(f"Response: {response.text[:500]}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Invalid JSON response from API"
@@ -174,9 +178,12 @@ def search_linkedin_jobs(request: JobSearchRequest):
             "jobs": formatted_jobs
         }
 
-    except subprocess.TimeoutExpired:
+    except requests.Timeout:
         print(f"Request timeout error")
         raise HTTPException(status_code=408, detail="Request timed out")
+    except requests.RequestException as e:
+        print(f"Request error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")
     except HTTPException:
         # Re-raise HTTPExceptions (like quota errors) without wrapping
         raise

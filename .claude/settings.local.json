@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(timeout /t 3)",
+      "Bash(curl:*)",
+      "Bash(py -m pip install:*)",
+      "Bash(taskkill:*)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(ping:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }

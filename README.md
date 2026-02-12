@@ -44,4 +44,3 @@ See [frontend/README.md](./frontend/README.md) for detailed frontend documentati
 - [backend/CAREER_RECOMMENDATION.md](./backend/CAREER_RECOMMENDATION.md) - Career recommendation system
 - [backend/TMU_CATALOG.md](./backend/TMU_CATALOG.md) - TMU calendar catalog and scrapers
 - [backend/SERVICE_ARCHITECTURE.md](./backend/SERVICE_ARCHITECTURE.md) - Service architecture
-
