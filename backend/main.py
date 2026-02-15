@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.exceptions import RequestValidationError
@@ -9,6 +9,7 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
+from app.db import get_db, check_connection
 from app.controllers.plan_controller import router as plan_router
 from app.controllers.transcript_controller import router as transcript_router
 from app.controllers.catalog_controller import router as catalog_router
@@ -16,12 +17,10 @@ from app.controllers.enrich_controller import router as enrich_router
 from app.controllers.recommend_controller import router as recommend_router
 from app.controllers.professor_controller import router as professor_router
 from app.controllers.project_controller import router as project_router
-
 try:
     from app.controllers.linkedin_controller import router as linkedin_router
     HAS_LINKEDIN = True
 except Exception:
-    linkedin_router = None
     HAS_LINKEDIN = False
 
 app = FastAPI(title="PathPilot API", version="0.1.0")
@@ -54,6 +53,7 @@ def root():
         "version": "0.1.0",
         "docs": "/docs",
         "health": "/health",
+        "health_db": "/health/db",
         "endpoints": endpoints,
     }
 
@@ -65,6 +65,14 @@ def favicon():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/health/db")
+def health_db():
+    """Database connectivity check. Returns 503 if DATABASE_URL is unset or connection fails."""
+    if check_connection():
+        return {"database": "ok"}
+    raise HTTPException(status_code=503, detail="Database not configured or connection failed. Set DATABASE_URL in .env.")
 
 app.include_router(plan_router, prefix="/plan", tags=["plan"])
 app.include_router(transcript_router, prefix="/transcripts", tags=["transcripts"])
