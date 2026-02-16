@@ -1,16 +1,13 @@
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { ontarioTechCSCourses } from '../data/courseGraphData'
+import { useAppContext } from '../context/AppContext'
+import { getSchoolKey } from '../data/schoolMapping'
 
 const NON_EARNED_GRADES = new Set(['F', 'WD', 'W', 'NC', 'IP', 'CO'])
 const IN_PROGRESS_GRADES = new Set(['IP', 'CO'])
 
 const normalizeCourseCode = (code) => (code || '').replace(/\s+/g, '').toUpperCase()
-
-const totalRequiredCredits = ontarioTechCSCourses.reduce(
-  (sum, course) => sum + (course.credits || 0),
-  0
-)
 
 const seasonRank = {
   Winter: 1,
@@ -120,6 +117,32 @@ const ProgressBar = ({ label, value, helper, accent }) => (
 )
 
 export default function DataDashboard() {
+  const { university, programSlug } = useAppContext()
+  const schoolKey = getSchoolKey(university)
+
+  const [dynamicCourses, setDynamicCourses] = useState(null)
+
+  useEffect(() => {
+    if (schoolKey && schoolKey !== 'ontariotech' && programSlug) {
+      fetch(`http://localhost:8000/catalog/program-courses?school=${schoolKey}&program=${programSlug}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.use_local && data.courses) {
+            setDynamicCourses(data.courses)
+          }
+        })
+        .catch(() => {})
+    } else {
+      setDynamicCourses(null)
+    }
+  }, [schoolKey, programSlug])
+
+  const programCourses = dynamicCourses || ontarioTechCSCourses
+  const totalRequiredCredits = programCourses.reduce(
+    (sum, course) => sum + (course.credits || 0),
+    0
+  )
+
   const [transcriptData, setTranscriptData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -173,7 +196,7 @@ export default function DataDashboard() {
     completedCourses.forEach((course) => {
       const normalized = normalizeCourseCode(course.course_code)
       if (!normalized) return
-      const match = ontarioTechCSCourses.find(item => (
+      const match = programCourses.find(item => (
         normalizeCourseCode(item.id) === normalized ||
         normalizeCourseCode(item.code) === normalized
       ))
@@ -183,7 +206,7 @@ export default function DataDashboard() {
     })
 
     const completedCount = matchedCatalog.size
-    const totalCourses = ontarioTechCSCourses.length
+    const totalCourses = programCourses.length
     const remainingCount = Math.max(totalCourses - completedCount, 0)
     const completionRate = totalCourses ? Math.round((completedCount / totalCourses) * 100) : 0
     const creditsEarned = Number(transcriptData?.total_credits_earned || 0)
@@ -206,7 +229,7 @@ export default function DataDashboard() {
       latestTerm,
       matchRate
     }
-  }, [transcriptData])
+  }, [transcriptData, programCourses, totalRequiredCredits])
 
   return (
     <motion.section
@@ -298,7 +321,7 @@ export default function DataDashboard() {
             <MetricCard
               label="Courses remaining"
               value={metrics.remainingCount}
-              detail="Based on the Ontario Tech CS catalog"
+              detail={`Based on the ${dynamicCourses ? 'program' : 'Ontario Tech CS'} catalog`}
               accent="rgba(71, 167, 255, 0.6)"
             />
             <MetricCard

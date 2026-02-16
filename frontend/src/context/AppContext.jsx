@@ -23,6 +23,7 @@ export const AppProvider = ({ children }) => {
   const [selectedCareer, setSelectedCareer] = useState(null) // Full career object with description
   const [courses, setCourses] = useState([]) // Parsed courses from transcript
   const [enrichedCourses, setEnrichedCourses] = useState([]) // Enriched courses with catalog data
+  const [programSlug, setProgramSlug] = useState(null) // Program slug for API lookups (e.g. 'computer_sci')
 
   // Accessibility settings
   const [highContrast, setHighContrast] = useState(false)
@@ -53,6 +54,8 @@ export const AppProvider = ({ children }) => {
     setCourses,
     enrichedCourses,
     setEnrichedCourses,
+    programSlug,
+    setProgramSlug,
     highContrast,
     setHighContrast,
     reduceMotion,

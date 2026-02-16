@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { mockUniversities, mockPrograms } from '../data/mockData'
 import { useAppContext } from '../context/AppContext'
+import { getSchoolKey } from '../data/schoolMapping'
 
 const transcriptTypes = ['Undergraduate', 'Graduate', 'Postgraduate']
 const languages = ['English', 'French', 'Spanish', 'Chinese']
@@ -12,6 +13,7 @@ export default function ValidationPage({ onBack, onContinue }) {
     setUniversity,
     program,
     setProgram,
+    setProgramSlug,
     transcriptType,
     setTranscriptType,
     language,
@@ -27,16 +29,50 @@ export default function ValidationPage({ onBack, onContinue }) {
   const [selectedLanguage, setSelectedLanguage] = useState(language || 'English')
   const [openDropdown, setOpenDropdown] = useState(null)
 
+  // Dynamic program list from backend
+  const [availablePrograms, setAvailablePrograms] = useState(mockPrograms)
+  const [programSlugs, setProgramSlugs] = useState({}) // name -> slug mapping
+
   // Update selected values when context changes (from transcript parsing)
   useEffect(() => {
     if (university) setSelectedUni(university)
     if (program) setSelectedProgram(program)
   }, [university, program])
 
+  // Fetch programs when university changes
+  useEffect(() => {
+    const schoolKey = getSchoolKey(selectedUni)
+    if (schoolKey && schoolKey !== 'ontariotech') {
+      fetch(`http://localhost:8000/catalog/programs?school=${schoolKey}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.programs && data.programs.length > 0) {
+            const names = data.programs.map(p => p.name)
+            const slugMap = {}
+            data.programs.forEach(p => { slugMap[p.name] = p.slug })
+            setAvailablePrograms(names)
+            setProgramSlugs(slugMap)
+            // If current selection isn't in new list, select first
+            if (!names.includes(selectedProgram)) {
+              setSelectedProgram(names[0])
+            }
+          }
+        })
+        .catch(() => {
+          setAvailablePrograms(mockPrograms)
+          setProgramSlugs({})
+        })
+    } else {
+      setAvailablePrograms(mockPrograms)
+      setProgramSlugs({})
+    }
+  }, [selectedUni])
+
   const handleContinue = async () => {
     // Save to global state
     setUniversity(selectedUni)
     setProgram(selectedProgram)
+    setProgramSlug(programSlugs[selectedProgram] || null)
     setTranscriptType(selectedTranscript)
     setLanguage(selectedLanguage)
 
@@ -393,7 +429,7 @@ export default function ValidationPage({ onBack, onContinue }) {
           <DropdownSelect
             label="Program"
             value={selectedProgram}
-            options={mockPrograms}
+            options={availablePrograms}
             onChange={setSelectedProgram}
             showLogos={false}
           />

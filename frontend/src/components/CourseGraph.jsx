@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -16,6 +16,8 @@ import {
   getCourseStatus,
   CourseStatus
 } from '../data/courseGraphData';
+import { useAppContext } from '../context/AppContext';
+import { getSchoolKey } from '../data/schoolMapping';
 
 // Custom node with handles for connections
 function CourseNode({ data }) {
@@ -151,8 +153,8 @@ function CourseNode({ data }) {
 
 const nodeTypes = { courseNode: CourseNode };
 
-// Define course sets for each tab
-const courseSets = {
+// Define course sets for each tab (Ontario Tech)
+const ontarioTechCourseSets = {
   all: {
     label: 'All Courses',
     ids: [
@@ -218,8 +220,8 @@ const courseSets = {
   }
 };
 
-function generateGraphData(courseIds, studentProgress, isAllTab = false, onRemoveCourse = null) {
-  const courses = ontarioTechCSCourses.filter(c => courseIds.includes(c.id));
+function generateGraphData(courseIds, studentProgress, isAllTab = false, onRemoveCourse = null, allCourses = ontarioTechCSCourses) {
+  const courses = allCourses.filter(c => courseIds.includes(c.id));
   const courseIdSet = new Set(courseIds);
 
   // Group by year
@@ -312,7 +314,38 @@ function generateGraphData(courseIds, studentProgress, isAllTab = false, onRemov
   return { nodes, edges };
 }
 
-export default function CourseGraph({ studentProgress = mockStudentProgress }) {
+export default function CourseGraph({ studentProgress: studentProgressProp }) {
+  const { university, programSlug } = useAppContext();
+  const schoolKey = getSchoolKey(university);
+
+  // Dynamic course data from backend
+  const [dynamicCourses, setDynamicCourses] = useState(null);
+  const [dynamicCourseSets, setDynamicCourseSets] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (schoolKey && schoolKey !== 'ontariotech' && programSlug) {
+      setLoading(true);
+      fetch(`http://localhost:8000/catalog/program-courses?school=${schoolKey}&program=${programSlug}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.use_local && data.courses) {
+            setDynamicCourses(data.courses);
+            setDynamicCourseSets(data.course_sets);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
+      setDynamicCourses(null);
+      setDynamicCourseSets(null);
+    }
+  }, [schoolKey, programSlug]);
+
+  const allCourses = dynamicCourses || ontarioTechCSCourses;
+  const courseSets = dynamicCourseSets || ontarioTechCourseSets;
+  const studentProgress = studentProgressProp || mockStudentProgress;
+
   const [activeTab, setActiveTab] = useState('all');
   const [hiddenCourses, setHiddenCourses] = useState(new Set());
   const [visibleStatuses, setVisibleStatuses] = useState(new Set([
@@ -351,7 +384,7 @@ export default function CourseGraph({ studentProgress = mockStudentProgress }) {
       return visibleStatuses.has(status);
     });
     
-    const visibleCourses = ontarioTechCSCourses.filter(c => visibleCourseIds.includes(c.id));
+    const visibleCourses = allCourses.filter(c => visibleCourseIds.includes(c.id));
     
     // Create a structured data object
     const courseData = {
@@ -384,7 +417,7 @@ export default function CourseGraph({ studentProgress = mockStudentProgress }) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [activeTab, hiddenCourses, visibleStatuses, studentProgress]);
+  }, [activeTab, hiddenCourses, visibleStatuses, studentProgress, allCourses, courseSets]);
 
   const { initialNodes, initialEdges } = useMemo(() => {
     let filteredIds = courseSets[activeTab].ids.filter(id => !hiddenCourses.has(id));
@@ -395,9 +428,9 @@ export default function CourseGraph({ studentProgress = mockStudentProgress }) {
       return visibleStatuses.has(status);
     });
     
-    const { nodes, edges } = generateGraphData(filteredIds, studentProgress, activeTab === 'all', handleRemoveCourse);
+    const { nodes, edges } = generateGraphData(filteredIds, studentProgress, activeTab === 'all', handleRemoveCourse, allCourses);
     return { initialNodes: nodes, initialEdges: edges };
-  }, [activeTab, studentProgress, hiddenCourses, visibleStatuses, handleRemoveCourse]);
+  }, [activeTab, studentProgress, hiddenCourses, visibleStatuses, handleRemoveCourse, allCourses, courseSets]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -412,16 +445,47 @@ export default function CourseGraph({ studentProgress = mockStudentProgress }) {
       return visibleStatuses.has(status);
     });
     
-    const { nodes: newNodes, edges: newEdges } = generateGraphData(filteredIds, studentProgress, activeTab === 'all', handleRemoveCourse);
+    const { nodes: newNodes, edges: newEdges } = generateGraphData(filteredIds, studentProgress, activeTab === 'all', handleRemoveCourse, allCourses);
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [activeTab, studentProgress, hiddenCourses, visibleStatuses, handleRemoveCourse, setNodes, setEdges]);
+  }, [activeTab, studentProgress, hiddenCourses, visibleStatuses, handleRemoveCourse, setNodes, setEdges, allCourses, courseSets]);
+
+  // Reset tab when courses change
+  useEffect(() => {
+    setActiveTab('all');
+    setHiddenCourses(new Set());
+  }, [allCourses]);
 
   const stats = useMemo(() => ({
     completed: studentProgress.completedCourses.length,
     inProgress: studentProgress.inProgressCourses.length,
     recommended: studentProgress.recommendedCourses.length
   }), [studentProgress]);
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{
+          width: '100%',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          background: '#09090b',
+          border: '1px solid #27272a',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          color: '#71717a',
+          fontSize: '14px'
+        }}
+      >
+        Loading course graph...
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
